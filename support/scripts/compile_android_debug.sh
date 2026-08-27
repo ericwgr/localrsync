@@ -6,7 +6,7 @@
 set -euo pipefail
 
 cd app
-fvm flutter build apk --debug
+fvm flutter build apk --debug --target-platform android-arm64
 cd ..
 
 echo

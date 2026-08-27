@@ -230,7 +230,12 @@ class MainActivity : FlutterActivity() {
             result.success(
                 directory.listFiles()
                     ?.filter { it.isDirectory }
-                    ?.sortedBy { it.name.lowercase(Locale.ROOT) }
+                    // Show recently modified folders first. Keep the name as
+                    // a deterministic tie-breaker when timestamps match.
+                    ?.sortedWith(
+                        compareByDescending<java.io.File> { it.lastModified() }
+                            .thenBy { it.name.lowercase(Locale.ROOT) }
+                    )
                     ?.map { it.absolutePath }
                     ?: emptyList<String>()
             )

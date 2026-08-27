@@ -25,7 +25,7 @@ alias flutter='submodules/flutter/bin/flutter'
 flutter config --no-analytics
 flutter pub get
 dart run build_runner build -d
-flutter build apk
+flutter build apk --target-platform android-arm64
 
 popd
 cd localsend

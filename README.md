@@ -205,7 +205,7 @@ These commands are intended for maintainers only. Make sure to run them from the
 Traditional APK
 
 ```bash
-flutter build apk
+flutter build apk --target-platform android-arm64
 ```
 
 AppBundle for Google Play
