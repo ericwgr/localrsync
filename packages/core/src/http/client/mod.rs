@@ -171,6 +171,26 @@ impl LsHttpClient {
             LsHttpClient::V3(client) => client.cancel(protocol, ip, port, session_id).await,
         }
     }
+
+    /// Queries the sync folder information of another device.
+    ///
+    /// POST /api/localsend/v2/sync-folder-info
+    ///
+    /// This is a LocalRsync extension; the v3 protocol has no equivalent, so a
+    /// v3 client answers with an error.
+    pub async fn sync_folder_info(
+        &self,
+        protocol: model::discovery::ProtocolType,
+        ip: &str,
+        port: u16,
+    ) -> Result<http::dto_v2::SyncFolderInfoResultV2, ClientError> {
+        match self {
+            LsHttpClient::V2(client) => client.sync_folder_info(protocol, ip, port).await,
+            LsHttpClient::V3(_) => Err(ClientError::Other(anyhow::anyhow!(
+                "sync-folder-info is not supported by the v3 protocol"
+            ))),
+        }
+    }
 }
 
 /// Builds a streaming request body from the file content, invoking `progress`

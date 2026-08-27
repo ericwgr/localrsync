@@ -24,6 +24,13 @@ class SettingsTabVm with SettingsTabVmMappable {
   final bool autoStart;
   final bool autoStartLaunchHidden;
   final bool showInContextMenu;
+
+  /// Whether "All files access" is granted (Android). Meaningless on other platforms.
+  final bool allFilesAccessGranted;
+
+  /// Whether "Full Disk Access" is granted (macOS). Meaningless on other platforms.
+  final bool fullDiskAccessGranted;
+
   final void Function(BuildContext context, ThemeMode mode) onChangeTheme;
   final void Function(BuildContext context, ColorMode mode) onChangeColorMode;
   final void Function(BuildContext context) onTapLanguage;
@@ -34,6 +41,14 @@ class SettingsTabVm with SettingsTabVmMappable {
   final void Function(BuildContext context) onTapStartServer;
   final void Function() onTapStopServer;
   final void Function(bool advanced) onTapAdvanced;
+
+  /// Called when the settings tab becomes visible: re-checks the file access
+  /// permissions and shows a guided dialog when they are missing.
+  final Future<void> Function(BuildContext context) onTabEntered;
+
+  /// Triggered by the permission entries: requests/opens the system settings
+  /// when not granted, or silently re-checks when granted.
+  final Future<void> Function(BuildContext context) onCheckPermission;
 
   SettingsTabVm({
     required this.advanced,
@@ -49,6 +64,8 @@ class SettingsTabVm with SettingsTabVmMappable {
     required this.autoStart,
     required this.autoStartLaunchHidden,
     required this.showInContextMenu,
+    required this.allFilesAccessGranted,
+    required this.fullDiskAccessGranted,
     required this.onChangeTheme,
     required this.onChangeColorMode,
     required this.onTapLanguage,
@@ -59,5 +76,7 @@ class SettingsTabVm with SettingsTabVmMappable {
     required this.onTapStartServer,
     required this.onTapStopServer,
     required this.onTapAdvanced,
+    required this.onTabEntered,
+    required this.onCheckPermission,
   });
 }

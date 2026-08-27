@@ -9,11 +9,13 @@ import 'package:localsend_app/provider/network/server/controller/receive_control
 import 'package:localsend_app/provider/network/server/controller/send_controller.dart';
 import 'package:localsend_app/provider/network/server/server_utils.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/sync_folder_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/native/web_pages_loader.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/dto/multicast_dto.dart';
+import 'package:localsend_isolates/rust/api/http.dart' show SyncFolderInfoDtoV2;
 import 'package:localsend_isolates/rust/api/server.dart' show WebI18n, WebMode, WebParams;
 import 'package:localsend_isolates/util/rust.dart';
 import 'package:logging/logging.dart';
@@ -368,7 +370,25 @@ class ServerService extends Notifier<ServerState?> {
       case HttpServerListenerFailedEvent():
         // ignore: discarded_futures
         _restartAfterListenerFailure(event.error);
+      case HttpServerSyncFolderInfoRequestedEvent():
+        _onSyncFolderInfoRequested(event);
     }
+  }
+
+  /// Answers a sync-folder-info request with this device's sync folder
+  /// configuration. Responds with 204 (via `null`) when no sync folder is
+  /// configured or its path is unknown.
+  void _onSyncFolderInfoRequested(HttpServerSyncFolderInfoRequestedEvent event) {
+    final syncFolder = ref.read(syncFolderProvider);
+    final path = syncFolder.path;
+    final SyncFolderInfoDtoV2? info = path == null
+        ? null
+        : SyncFolderInfoDtoV2(
+            path: path,
+            sizeBytes: syncFolder.sizeBytes != null ? BigInt.from(syncFolder.sizeBytes!) : null,
+          );
+    // ignore: discarded_futures
+    ref.redux(parentIsolateProvider).dispatch(IsolateHttpServerSyncFolderInfoAction(info: info));
   }
 
   /// Restarts the server after its listening socket failed permanently,

@@ -26,19 +26,37 @@ class AddressInputDialog extends StatefulWidget {
   State<AddressInputDialog> createState() => _AddressInputDialogState();
 }
 
+/// LocalSend default port, used when a URL has no explicit port.
+const _defaultPort = 53317;
+
 class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
   String _input = '';
   bool _fetching = false;
   String? _error;
 
-  Future<void> _submit(int port, [String? candidate]) async {
-    final candidates = [candidate ?? _input.trim()];
+  Future<void> _submit([String? candidate]) async {
+    final input = (candidate ?? _input).trim();
+    final uri = Uri.tryParse(input);
+    final String host;
+    final bool https;
+    final int port;
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty) {
+      // Full URL: protocol and port come from the URL itself.
+      host = uri.host;
+      https = uri.scheme == 'https';
+      port = uri.hasPort ? uri.port : _defaultPort;
+    } else {
+      // Bare IP: fall back to the local protocol settings.
+      final settings = ref.read(settingsProvider);
+      host = input;
+      https = settings.https;
+      port = settings.port;
+    }
+    final candidates = [host];
 
     setState(() {
       _fetching = true;
     });
-
-    final https = ref.read(settingsProvider).https;
 
     final deviceCompleter = Completer<void>();
     Device? foundDevice;
@@ -97,7 +115,6 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
   @override
   Widget build(BuildContext context) {
     final localIps = (ref.watch(localIpProvider.select((info) => info.localIps))).uniqueIpPrefix;
-    final settings = ref.watch(settingsProvider);
     final lastDevices = ref.watch(lastDevicesProvider);
 
     return AlertDialog(
@@ -115,7 +132,7 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
             onChanged: (s) {
               setState(() => _input = s);
             },
-            onFieldSubmitted: (s) async => _submit(settings.port),
+            onFieldSubmitted: (s) async => _submit(),
           ),
           const SizedBox(height: 10),
           if (lastDevices.isEmpty)
@@ -135,7 +152,7 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
                           TextSpan(
                             text: device.ip,
                             style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                            recognizer: TapGestureRecognizer()..onTap = () async => _submit(settings.port, device.ip),
+                            recognizer: TapGestureRecognizer()..onTap = () async => _submit(device.ip),
                           ),
                         ];
                       })
@@ -175,7 +192,7 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
           child: Text(t.general.cancel),
         ),
         FilledButton(
-          onPressed: _fetching ? null : () async => _submit(settings.port),
+          onPressed: _fetching ? null : () async => _submit(),
           child: Text(t.general.confirm),
         ),
       ],

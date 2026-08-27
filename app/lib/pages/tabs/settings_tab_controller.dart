@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/model/persistence/color_mode.dart';
@@ -8,10 +10,13 @@ import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/util/native/autostart_helper.dart';
+import 'package:localsend_app/util/native/channel/android_channel.dart';
 import 'package:localsend_app/util/native/context_menu_helper.dart';
+import 'package:localsend_app/util/native/macos_channel.dart';
 import 'package:localsend_app/util/ui/dynamic_colors.dart';
 import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:localsend_app/widget/dialogs/custom_color_dialog.dart';
+import 'package:localsend_app/widget/dialogs/storage_permission_dialog.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/device_info_result.dart';
 import 'package:localsend_isolates/util/sleep.dart';
@@ -44,6 +49,10 @@ class SettingsTabController extends ReduxNotifier<SettingsTabVm> {
   final DeviceInfoResult _initialDeviceInfo;
   final bool _supportsDynamicColors;
 
+  /// Whether the permission guidance dialog was already shown in this app run,
+  /// so that it does not pop up again while the permission is still missing.
+  bool _permissionPromptedThisSession = false;
+
   SettingsTabController({
     required SettingsService settingsService,
     required ServerService serverNotifier,
@@ -60,6 +69,14 @@ class SettingsTabController extends ReduxNotifier<SettingsTabVm> {
 
   @override
   SettingsTabVm init() {
+    // Keep the state in sync when the user returns from System Settings after
+    // granting (or revoking) Full Disk Access.
+    if (Platform.isMacOS) {
+      fullDiskAccessStream.listen((granted) {
+        redux.dispatch(_SetFullDiskAccessGrantedAction(granted));
+      });
+    }
+
     return SettingsTabVm(
       advanced: _settingsService.state.advancedSettings,
       aliasController: TextEditingController(text: _settingsService.state.alias),
@@ -74,6 +91,8 @@ class SettingsTabController extends ReduxNotifier<SettingsTabVm> {
       autoStart: false,
       autoStartLaunchHidden: false,
       showInContextMenu: false,
+      allFilesAccessGranted: false,
+      fullDiskAccessGranted: false,
       onChangeTheme: (context, theme) async {
         await _settingsService.setTheme(theme);
         await sleepAsync(500); // workaround: brightness takes some time to be updated
@@ -164,7 +183,82 @@ class SettingsTabController extends ReduxNotifier<SettingsTabVm> {
       },
       onTapStopServer: () async => await _serverService.stopServer(),
       onTapAdvanced: (advanced) => redux.dispatch(SetAdvancedAction(advanced)),
+      onTabEntered: _checkOnTabEntered,
+      onCheckPermission: _checkOrRequestPermission,
     );
+  }
+
+  /// Whether the file access permission of the current platform
+  /// has been granted. Meaningless on other platforms (returns true).
+  bool get _currentPlatformPermissionGranted {
+    if (Platform.isAndroid) {
+      return state.allFilesAccessGranted;
+    }
+    if (Platform.isMacOS) {
+      return state.fullDiskAccessGranted;
+    }
+    return true;
+  }
+
+  /// Re-reads the file access permission of the current platform from the OS
+  /// and mirrors it into the VM.
+  Future<bool> _refreshPermissionState() async {
+    if (Platform.isAndroid) {
+      final granted = await hasAllFilesAccessPermissionAndroid();
+      redux.dispatch(_SetAllFilesAccessGrantedAction(granted));
+      return granted;
+    }
+    if (Platform.isMacOS) {
+      final granted = await hasFullDiskAccessMacOs();
+      redux.dispatch(_SetFullDiskAccessGrantedAction(granted));
+      return granted;
+    }
+    return true;
+  }
+
+  /// Android: opens the "All files access" system screen and resolves with the
+  /// granted state once the user returns. macOS: opens the Full Disk Access pane
+  /// in System Settings (resolves immediately, the state is re-checked separately).
+  Future<bool> _openPermissionSettings() async {
+    if (Platform.isAndroid) {
+      final granted = await requestAllFilesAccessPermissionAndroid();
+      redux.dispatch(_SetAllFilesAccessGrantedAction(granted));
+      return granted;
+    }
+    if (Platform.isMacOS) {
+      await openFullDiskAccessSettings();
+      return false;
+    }
+    return true;
+  }
+
+  /// Called when the settings tab becomes visible: re-checks the file access
+  /// permission and shows a guided dialog when it is missing (once per app run).
+  Future<void> _checkOnTabEntered(BuildContext context) async {
+    final granted = await _refreshPermissionState();
+    if (!context.mounted || granted || _permissionPromptedThisSession) {
+      return;
+    }
+    _permissionPromptedThisSession = true;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => StoragePermissionDialog(
+        isAndroid: Platform.isAndroid,
+        onOpenSettings: _openPermissionSettings,
+        onRecheck: _refreshPermissionState,
+      ),
+    );
+  }
+
+  /// Triggered by the permission entry rows: opens/requests the system settings
+  /// when not granted, or silently re-checks when already granted.
+  Future<void> _checkOrRequestPermission(BuildContext context) async {
+    if (_currentPlatformPermissionGranted) {
+      await _refreshPermissionState();
+    } else {
+      await _openPermissionSettings();
+    }
   }
 
   @override
@@ -188,10 +282,14 @@ class _SettingsTabInitAction extends AsyncReduxAction<SettingsTabController, Set
     final autoStartEnabled = await isAutoStartEnabled();
     final autoStartHidden = await isAutoStartHidden();
     final showInContextMenu = await isContextMenuEnabled();
+    final allFilesAccessGranted = Platform.isAndroid ? await hasAllFilesAccessPermissionAndroid() : false;
+    final fullDiskAccessGranted = Platform.isMacOS ? await hasFullDiskAccessMacOs() : false;
     return state.copyWith(
       autoStart: autoStartEnabled,
       autoStartLaunchHidden: autoStartHidden,
       showInContextMenu: showInContextMenu,
+      allFilesAccessGranted: allFilesAccessGranted,
+      fullDiskAccessGranted: fullDiskAccessGranted,
     );
   }
 }
@@ -248,5 +346,27 @@ class _SetShowInContextMenuAction extends ReduxAction<SettingsTabController, Set
   @override
   SettingsTabVm reduce() {
     return state.copyWith(showInContextMenu: enabled);
+  }
+}
+
+class _SetAllFilesAccessGrantedAction extends ReduxAction<SettingsTabController, SettingsTabVm> {
+  final bool granted;
+
+  _SetAllFilesAccessGrantedAction(this.granted);
+
+  @override
+  SettingsTabVm reduce() {
+    return state.copyWith(allFilesAccessGranted: granted);
+  }
+}
+
+class _SetFullDiskAccessGrantedAction extends ReduxAction<SettingsTabController, SettingsTabVm> {
+  final bool granted;
+
+  _SetFullDiskAccessGrantedAction(this.granted);
+
+  @override
+  SettingsTabVm reduce() {
+    return state.copyWith(fullDiskAccessGranted: granted);
   }
 }

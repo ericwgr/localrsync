@@ -55,7 +55,7 @@ extension RsServerEventPatterns on RsServerEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -68,7 +68,8 @@ return cancelReceived(_that);case RsServerEvent_WebPrepareDownload() when webPre
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFileDownload != null:
 return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
 return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
-return listenerFailed(_that);case _:
+return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
+return syncFolderInfoRequested(_that);case _:
   return orElse();
 
 }
@@ -86,7 +87,7 @@ return listenerFailed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,required TResult Function( RsServerEvent_SyncFolderInfoRequested value)  syncFolderInfoRequested,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
@@ -99,7 +100,8 @@ return cancelReceived(_that);case RsServerEvent_WebPrepareDownload():
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload():
 return webFileDownload(_that);case RsServerEvent_Show():
 return show_(_that);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that);}
+return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested():
+return syncFolderInfoRequested(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -113,7 +115,7 @@ return listenerFailed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult? Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -126,7 +128,8 @@ return cancelReceived(_that);case RsServerEvent_WebPrepareDownload() when webPre
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFileDownload != null:
 return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
 return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
-return listenerFailed(_that);case _:
+return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
+return syncFolderInfoRequested(_that);case _:
   return null;
 
 }
@@ -143,7 +146,7 @@ return listenerFailed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( List<String> args)?  show_,TResult Function( String error)?  listenerFailed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( List<String> args)?  show_,TResult Function( String error)?  listenerFailed,TResult Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -155,7 +158,8 @@ return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDow
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload() when webFileDownload != null:
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
 return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
-return listenerFailed(_that.error);case _:
+return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case _:
   return orElse();
 
 }
@@ -173,7 +177,7 @@ return listenerFailed(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( List<String> args)  show_,required TResult Function( String error)  listenerFailed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( List<String> args)  show_,required TResult Function( String error)  listenerFailed,required TResult Function( String ip,  String? certFingerprint)  syncFolderInfoRequested,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload():
@@ -185,7 +189,8 @@ return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDow
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload():
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show():
 return show_(_that.args);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that.error);}
+return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested():
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -199,7 +204,7 @@ return listenerFailed(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( List<String> args)?  show_,TResult? Function( String error)?  listenerFailed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( List<String> args)?  show_,TResult? Function( String error)?  listenerFailed,TResult? Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -211,7 +216,8 @@ return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDow
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload() when webFileDownload != null:
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
 return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
-return listenerFailed(_that.error);case _:
+return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case _:
   return null;
 
 }
@@ -919,6 +925,78 @@ class _$RsServerEvent_ListenerFailedCopyWithImpl<$Res>
   return _then(RsServerEvent_ListenerFailed(
 error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsServerEvent_SyncFolderInfoRequested extends RsServerEvent {
+  const RsServerEvent_SyncFolderInfoRequested({required this.ip, this.certFingerprint}): super._();
+  
+
+/// The IP address of the requesting device.
+ final  String ip;
+/// The SHA-256 fingerprint (uppercase hex) of the requester's client
+/// certificate verified during the mTLS handshake. `None` when the
+/// server runs without TLS.
+ final  String? certFingerprint;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_SyncFolderInfoRequestedCopyWith<RsServerEvent_SyncFolderInfoRequested> get copyWith => _$RsServerEvent_SyncFolderInfoRequestedCopyWithImpl<RsServerEvent_SyncFolderInfoRequested>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_SyncFolderInfoRequested&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.certFingerprint, certFingerprint) || other.certFingerprint == certFingerprint));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,certFingerprint);
+
+@override
+String toString() {
+  return 'RsServerEvent.syncFolderInfoRequested(ip: $ip, certFingerprint: $certFingerprint)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_SyncFolderInfoRequestedCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_SyncFolderInfoRequestedCopyWith(RsServerEvent_SyncFolderInfoRequested value, $Res Function(RsServerEvent_SyncFolderInfoRequested) _then) = _$RsServerEvent_SyncFolderInfoRequestedCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String? certFingerprint
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_SyncFolderInfoRequestedCopyWithImpl<$Res>
+    implements $RsServerEvent_SyncFolderInfoRequestedCopyWith<$Res> {
+  _$RsServerEvent_SyncFolderInfoRequestedCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_SyncFolderInfoRequested _self;
+  final $Res Function(RsServerEvent_SyncFolderInfoRequested) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? certFingerprint = freezed,}) {
+  return _then(RsServerEvent_SyncFolderInfoRequested(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,certFingerprint: freezed == certFingerprint ? _self.certFingerprint : certFingerprint // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

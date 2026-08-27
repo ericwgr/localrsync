@@ -190,9 +190,50 @@ class AppDelegate: FlutterAppDelegate {
         case "openFirewallSettings":
             openFirewallSettings()
             result(nil)
+        case "hasFullDiskAccess":
+            result(hasFullDiskAccess())
+        case "openFullDiskAccessSettings":
+            openFullDiskAccessSettings()
+            result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
+    }
+
+    /// Whether "Full Disk Access" (TCC) has been granted.
+    ///
+    /// Full Disk Access cannot be queried through a public API; instead we try to
+    /// read TCC-protected paths of the user's home directory, which silently fail
+    /// without the grant. Returning true for any of them is enough.
+    private func hasFullDiskAccess() -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let candidates: [URL] = [
+            home.appendingPathComponent("Library/Application Support/com.apple.TCC/TCC.db"),
+            home.appendingPathComponent("Library/Safari"),
+            home.appendingPathComponent("Library/Mail"),
+        ]
+        for url in candidates {
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
+            do {
+                if isDirectory.boolValue {
+                    _ = try FileManager.default.contentsOfDirectory(atPath: url.path)
+                } else {
+                    _ = try Data(contentsOf: url, options: [.mappedIfSafe])
+                }
+                return true
+            } catch {
+                continue
+            }
+        }
+        return false
+    }
+
+    /// Notifies the Dart side about the current "Full Disk Access" state whenever
+    /// the app becomes active again (e.g. after the user returns from System Settings).
+    override func applicationDidBecomeActive(_ notification: Notification) {
+        super.applicationDidBecomeActive(notification)
+        channel?.invokeMethod("onFullDiskAccessChanged", arguments: hasFullDiskAccess())
     }
     
     private func saveDestinationFolderAccess(_ folderPath: String) throws {

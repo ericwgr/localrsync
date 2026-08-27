@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-    <string>LocalSend</string>
+    <string>LocalRsync</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconFile</key>
@@ -152,7 +152,7 @@
             <key>NSMessage</key>
             <string>handleSendTextService</string>
             <key>NSPortName</key>
-            <string>LocalSend</string>
+            <string>LocalRsync</string>
             <key>NSSendTypes</key>
             <array>
                 <string>public.plain-text</string>

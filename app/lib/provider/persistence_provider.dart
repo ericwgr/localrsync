@@ -78,6 +78,8 @@ const _networkBlacklistKey = 'ls_network_blacklist';
 const _timeoutKey = 'ls_timeout';
 const _multicastGroupKey = 'ls_multicast_group';
 const _destinationKey = 'ls_destination';
+const _syncFolderPathKey = 'ls_sync_folder_path';
+const _syncFolderSizeKey = 'ls_sync_folder_size';
 const _saveToGallery = 'ls_save_to_gallery';
 const _saveToHistory = 'ls_save_to_history';
 const _quickSave = 'ls_quick_save'; // a QuickSaveMode; was a bool until storage version 2 ('ls_quick_save_from_favorites' is merged into this key)
@@ -426,6 +428,30 @@ class PersistenceService {
       await _prefs.remove(_destinationKey);
     } else {
       await _prefs.setString(_destinationKey, destination);
+    }
+  }
+
+  String? getSyncFolderPath() {
+    return _prefs.getString(_syncFolderPathKey);
+  }
+
+  Future<void> setSyncFolderPath(String? path) async {
+    if (path == null) {
+      await _prefs.remove(_syncFolderPathKey);
+    } else {
+      await _prefs.setString(_syncFolderPathKey, path);
+    }
+  }
+
+  int? getSyncFolderSizeBytes() {
+    return _prefs.getInt(_syncFolderSizeKey);
+  }
+
+  Future<void> setSyncFolderSizeBytes(int? size) async {
+    if (size == null) {
+      await _prefs.remove(_syncFolderSizeKey);
+    } else {
+      await _prefs.setInt(_syncFolderSizeKey, size);
     }
   }
 

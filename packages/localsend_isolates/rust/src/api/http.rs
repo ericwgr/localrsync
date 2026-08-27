@@ -7,6 +7,8 @@ pub use localsend::http::dto::{
     PrepareUploadRequestDto, PrepareUploadResponseDto, PrepareUploadResult,
     RegisterDto, RegisterResponseDto,
 };
+pub use localsend::http::dto_v2::SyncFolderInfoDtoV2;
+use localsend::http::dto_v2::SyncFolderInfoResultV2;
 use localsend::model::discovery::ProtocolType;
 use localsend::reqwest;
 use localsend::util::error::ErrorChain;
@@ -172,6 +174,28 @@ impl RsHttpClient {
 
         Ok(())
     }
+
+    /// Queries the sync folder information of another device.
+    ///
+    /// POST /api/localsend/v2/sync-folder-info (LocalRsync extension).
+    /// Returns `null` when the peer has no sync folder configured (204).
+    pub async fn sync_folder_info(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+    ) -> Result<Option<SyncFolderInfoDtoV2>, RsHttpClientError> {
+        let result = self
+            .inner
+            .sync_folder_info(protocol, ip, port)
+            .await
+            .map_err(RsHttpClientError::from)?;
+
+        Ok(match result {
+            SyncFolderInfoResultV2::Info(info) => Some(info),
+            SyncFolderInfoResultV2::NotConfigured => None,
+        })
+    }
 }
 
 fn resolve_file_content(
@@ -256,4 +280,10 @@ pub struct _PrepareUploadResult {
 pub struct ResultWithPublicKeyRegisterResponseDto {
     pub public_key: Option<String>,
     pub body: RegisterResponseDto,
+}
+
+#[frb(mirror(SyncFolderInfoDtoV2))]
+pub struct _SyncFolderInfoDtoV2 {
+    pub path: String,
+    pub size_bytes: Option<u64>,
 }

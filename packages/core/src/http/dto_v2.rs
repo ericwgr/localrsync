@@ -9,6 +9,28 @@ use std::collections::HashMap;
 use crate::model::discovery::ProtocolType;
 use crate::model::discovery::{device_type_v2, protocol_type_v2};
 
+/// The sync folder information of a device, as reported by
+/// `POST /api/localsend/v2/sync-folder-info`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncFolderInfoDtoV2 {
+    /// Absolute path of the device's configured sync folder.
+    pub path: String,
+
+    /// Total size of the folder in bytes, or null when not calculated yet.
+    pub size_bytes: Option<u64>,
+}
+
+/// Result of a `POST /api/localsend/v2/sync-folder-info` request.
+#[derive(Debug, Clone)]
+pub enum SyncFolderInfoResultV2 {
+    /// The device has a sync folder configured.
+    Info(SyncFolderInfoDtoV2),
+
+    /// The device has no sync folder configured (204 No Content).
+    NotConfigured,
+}
+
 /// Register request DTO for v2.2 protocol.
 ///
 /// Sent to POST /api/localsend/v2/register for device discovery.

@@ -1,6 +1,6 @@
 use crate::http::dto_v2::{
     InfoResponseDtoV2, PrepareUploadRequestDtoV2, PrepareUploadResponseDtoV2, RegisterDtoV2,
-    RegisterResponseDtoV2,
+    RegisterResponseDtoV2, SyncFolderInfoDtoV2,
 };
 use crate::http::server::common::collect_to_json::CollectToJson;
 use crate::http::server::common::error::AppError;
@@ -128,6 +128,25 @@ pub enum ServerEventV2 {
         /// Description of the failure.
         error: String,
     },
+
+    /// A device requests the sync folder information via
+    /// `POST /api/localsend/v2/sync-folder-info`.
+    ///
+    /// The application must answer on `response_tx`: `Some(info)` responds
+    /// with the sync folder details, `None` with 204 (the sync folder is not
+    /// configured). Dropping `response_tx` results in a 500 response.
+    SyncFolderInfoRequested {
+        /// The IP address of the requesting device.
+        ip: PeerIp,
+
+        /// The SHA-256 fingerprint (uppercase hex) of the requester's client
+        /// certificate verified during the mTLS handshake. `None` when the
+        /// server runs without TLS.
+        cert_fingerprint: Option<String>,
+
+        /// Channel to send the sync folder information to.
+        response_tx: oneshot::Sender<Option<SyncFolderInfoDtoV2>>,
+    },
 }
 
 /// The application's decision for a prepare-upload request.
@@ -221,6 +240,43 @@ pub(crate) async fn info(state: AppState) -> Result<JsonResponse<InfoResponseDto
             download,
         },
     })
+}
+
+/// Handles `POST /api/localsend/v2/sync-folder-info`.
+///
+/// The sync folder is not known to the server; the application answers via a
+/// [ServerEventV2::SyncFolderInfoRequested] event. The response is 200 with
+/// the folder details, or 204 when no sync folder is configured.
+pub(crate) async fn sync_folder_info(
+    state: AppState,
+    client_info: RequestClientInfo,
+) -> Result<Response<BoxedBody>, AppError> {
+    let v2 = require_v2(&state)?;
+
+    let (response_tx, response_rx) = oneshot::channel();
+    let event = ServerEventV2::SyncFolderInfoRequested {
+        ip: client_info.ip,
+        cert_fingerprint: client_info.cert_fingerprint(),
+        response_tx,
+    };
+    if v2.event_tx.send(event).await.is_err() {
+        return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+    }
+
+    match response_rx.await {
+        Ok(Some(info)) => Ok(JsonResponse {
+            status: StatusCode::OK,
+            body: info,
+        }
+        .into_response()),
+        Ok(None) => {
+            // 204 No Content: the device has no sync folder configured.
+            let mut res = Response::new(empty_body());
+            *res.status_mut() = StatusCode::NO_CONTENT;
+            Ok(res)
+        }
+        Err(_) => Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR)),
+    }
 }
 
 pub(crate) async fn prepare_upload(

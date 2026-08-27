@@ -24,3 +24,13 @@ func openFirewallSettings() {
         NSWorkspace.shared.open(url)
     }
 }
+
+func openFullDiskAccessSettings() {
+    if #available(macOS 13, *) {
+        let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles")!
+        NSWorkspace.shared.open(url)
+    } else {
+        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
+        NSWorkspace.shared.open(url)
+    }
+}

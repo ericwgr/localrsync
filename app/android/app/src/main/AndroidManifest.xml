@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <!-- All files access (Android 11+): grants access to files anywhere in shared storage,
+         granted by the user in the system settings. Reviewed on the Play Console. -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
@@ -27,7 +31,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
-        android:label="LocalSend"
+        android:label="LocalRsync"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:banner="@drawable/banner"
@@ -78,7 +82,7 @@
         <service
             android:name=".QuickTileService"
             android:icon="@mipmap/ic_launcher_quicktile_foreground"
-            android:label="LocalSend"
+            android:label="LocalRsync"
             android:process=":quick_tile_service"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true"

@@ -5,6 +5,7 @@
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
+import 'package:localsend_isolates/rust/api/http.dart';
 import 'package:localsend_isolates/rust/api/model.dart';
 import 'package:localsend_isolates/rust/frb_generated.dart';
 
@@ -117,6 +118,12 @@ abstract class RsHttpServer implements RustOpaqueInterface {
   /// Passing the accepted file IDs (a subset of the offered files) accepts the request.
   /// Passing `None` declines the request.
   Future<void> respondPrepareUpload({List<String>? acceptedFileIds});
+
+  /// Answers the pending [RsServerEvent::SyncFolderInfoRequested] event.
+  ///
+  /// Passing `Some(info)` responds with 200 and the folder details.
+  /// Passing `None` responds with 204 (no sync folder configured).
+  Future<void> respondSyncFolderInfo({SyncFolderInfoDtoV2? info});
 
   /// Stops the server.
   /// Returns after the listeners are closed, so the port can be bound again.
@@ -262,6 +269,20 @@ sealed class RsServerEvent with _$RsServerEvent {
     /// Description of the failure.
     required String error,
   }) = RsServerEvent_ListenerFailed;
+
+  /// A device requests the sync folder information via
+  /// `POST /api/localsend/v2/sync-folder-info`.
+  ///
+  /// Must be answered with [RsHttpServer::respond_sync_folder_info].
+  const factory RsServerEvent.syncFolderInfoRequested({
+    /// The IP address of the requesting device.
+    required String ip,
+
+    /// The SHA-256 fingerprint (uppercase hex) of the requester's client
+    /// certificate verified during the mTLS handshake. `None` when the
+    /// server runs without TLS.
+    String? certFingerprint,
+  }) = RsServerEvent_SyncFolderInfoRequested;
 }
 
 enum SessionEndReasonV2 {

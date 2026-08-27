@@ -197,6 +197,8 @@ class Translations$receiveTab$zh_CN extends Translations$receiveTab$en {
   late final Translations$receiveTab$quickSave$zh_CN quickSave = Translations$receiveTab$quickSave$zh_CN.internal(_root);
   @override
   String get link => '通过链接接收';
+  @override
+  late final Translations$receiveTab$syncFolder$zh_CN syncFolder = Translations$receiveTab$syncFolder$zh_CN.internal(_root);
 }
 
 // Path: sendTab
@@ -222,6 +224,8 @@ class Translations$sendTab$zh_CN extends Translations$sendTab$en {
   String get scan => '扫描设备';
   @override
   String get manualSending => '手动发送';
+  @override
+  String get sendViaLink => '通过链接发送';
   @override
   String get sendMode => '发送模式';
   @override
@@ -251,6 +255,8 @@ class Translations$settingsTab$zh_CN extends Translations$settingsTab$en {
   late final Translations$settingsTab$send$zh_CN send = Translations$settingsTab$send$zh_CN.internal(_root);
   @override
   late final Translations$settingsTab$network$zh_CN network = Translations$settingsTab$network$zh_CN.internal(_root);
+  @override
+  late final Translations$settingsTab$permissions$zh_CN permissions = Translations$settingsTab$permissions$zh_CN.internal(_root);
   @override
   late final Translations$settingsTab$other$zh_CN other = Translations$settingsTab$other$zh_CN.internal(_root);
   @override
@@ -672,6 +678,8 @@ class Translations$dialogs$zh_CN extends Translations$dialogs$en {
   @override
   late final Translations$dialogs$addressInput$zh_CN addressInput = Translations$dialogs$addressInput$zh_CN.internal(_root);
   @override
+  late final Translations$dialogs$folderPicker$zh_CN folderPicker = Translations$dialogs$folderPicker$zh_CN.internal(_root);
+  @override
   late final Translations$dialogs$cancelSession$zh_CN cancelSession = Translations$dialogs$cancelSession$zh_CN.internal(_root);
   @override
   late final Translations$dialogs$cannotOpenFile$zh_CN cannotOpenFile = Translations$dialogs$cannotOpenFile$zh_CN.internal(_root);
@@ -695,6 +703,8 @@ class Translations$dialogs$zh_CN extends Translations$dialogs$en {
   @override
   late final Translations$dialogs$localNetworkUnauthorized$zh_CN localNetworkUnauthorized =
       Translations$dialogs$localNetworkUnauthorized$zh_CN.internal(_root);
+  @override
+  late final Translations$dialogs$permissionsRequired$zh_CN permissionsRequired = Translations$dialogs$permissionsRequired$zh_CN.internal(_root);
   @override
   late final Translations$dialogs$messageInput$zh_CN messageInput = Translations$dialogs$messageInput$zh_CN.internal(_root);
   @override
@@ -720,6 +730,8 @@ class Translations$dialogs$zh_CN extends Translations$dialogs$en {
   late final Translations$dialogs$sendModeHelp$zh_CN sendModeHelp = Translations$dialogs$sendModeHelp$zh_CN.internal(_root);
   @override
   late final Translations$dialogs$zoom$zh_CN zoom = Translations$dialogs$zoom$zh_CN.internal(_root);
+  @override
+  late final Translations$dialogs$syncDevice$zh_CN syncDevice = Translations$dialogs$syncDevice$zh_CN.internal(_root);
 }
 
 // Path: sanitization
@@ -868,6 +880,27 @@ class Translations$receiveTab$quickSave$zh_CN extends Translations$receiveTab$qu
   String get favorites => '收藏夹';
   @override
   String get on => _root.general.on;
+}
+
+// Path: receiveTab.syncFolder
+class Translations$receiveTab$syncFolder$zh_CN extends Translations$receiveTab$syncFolder$en {
+  Translations$receiveTab$syncFolder$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get choose => '设置同步文件夹';
+  @override
+  String get calculating => '正在计算文件夹大小…';
+  @override
+  String get unavailable => '无法获取文件夹大小';
+  @override
+  String get refresh => '重新获取文件夹大小';
+  @override
+  String get change => '更换文件夹';
+  @override
+  String get sync => '同步';
 }
 
 // Path: sendTab.selection
@@ -1046,6 +1079,29 @@ class Translations$settingsTab$network$zh_CN extends Translations$settingsTab$ne
   String get multicastGroup => '多播';
   @override
   String multicastGroupWarning({required Object defaultMulticast}) => '由于正在使用自定义多播地址，你可能不会被其他设备检测到。（默认地址：${defaultMulticast}）';
+}
+
+// Path: settingsTab.permissions
+class Translations$settingsTab$permissions$zh_CN extends Translations$settingsTab$permissions$en {
+  Translations$settingsTab$permissions$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => '文件访问权限';
+  @override
+  String get allFilesAccess => '所有文件访问';
+  @override
+  String get fullDiskAccess => '完整磁盘访问';
+  @override
+  String get granted => '已授予';
+  @override
+  String get request => '前往设置';
+  @override
+  String get openSettings => '打开系统设置';
+  @override
+  String get recheck => '重新检查';
 }
 
 // Path: settingsTab.other
@@ -1250,6 +1306,25 @@ class Translations$dialogs$addressInput$zh_CN extends Translations$dialogs$addre
   String get recentlyUsed => '最近使用： ';
 }
 
+// Path: dialogs.folderPicker
+class Translations$dialogs$folderPicker$zh_CN extends Translations$dialogs$folderPicker$en {
+  Translations$dialogs$folderPicker$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => '选择文件夹';
+  @override
+  String get up => '返回上一级';
+  @override
+  String get use => '选择此文件夹';
+  @override
+  String get empty => '此文件夹为空';
+  @override
+  String get unreadable => '无法访问此文件夹';
+}
+
 // Path: dialogs.cancelSession
 class Translations$dialogs$cancelSession$zh_CN extends Translations$dialogs$cancelSession$en {
   Translations$dialogs$cancelSession$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
@@ -1411,6 +1486,29 @@ class Translations$dialogs$localNetworkUnauthorized$zh_CN extends Translations$d
   String get gotoSettings => '设置';
 }
 
+// Path: dialogs.permissionsRequired
+class Translations$dialogs$permissionsRequired$zh_CN extends Translations$dialogs$permissionsRequired$en {
+  Translations$dialogs$permissionsRequired$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get titleAllFiles => '需要「所有文件访问」权限';
+  @override
+  String get descriptionAllFiles => '为了访问设备上的所有文件，请在系统设置中为本应用开启「所有文件访问」权限。';
+  @override
+  String get titleFullDisk => '需要「完整磁盘访问」权限';
+  @override
+  String get descriptionFullDisk => '为了访问您用户目录中的所有文件，请在「系统设置 → 隐私与安全性 → 完整磁盘访问」中允许本应用。';
+  @override
+  String get openSettings => '打开系统设置';
+  @override
+  String get recheck => '重新检查';
+  @override
+  String get later => '稍后';
+}
+
 // Path: dialogs.messageInput
 class Translations$dialogs$messageInput$zh_CN extends Translations$dialogs$messageInput$en {
   Translations$dialogs$messageInput$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
@@ -1560,6 +1658,45 @@ class Translations$dialogs$zoom$zh_CN extends Translations$dialogs$zoom$en {
   // Translations
   @override
   String get title => 'URL';
+}
+
+// Path: dialogs.syncDevice
+class Translations$dialogs$syncDevice$zh_CN extends Translations$dialogs$syncDevice$en {
+  Translations$dialogs$syncDevice$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => '设备同步';
+  @override
+  String get chooseDevice => '选择设备';
+  @override
+  String get inputHint => 'IP 地址或 http(s) 链接';
+  @override
+  String get connect => '连接';
+  @override
+  String get nearbyDevices => '附近设备';
+  @override
+  String get noDevicesFound => '未发现附近设备';
+  @override
+  String get addressNotFound => '在该地址未找到设备';
+  @override
+  String get next => '下一步';
+  @override
+  String get back => '上一步';
+  @override
+  String get deviceDetails => '设备详情';
+  @override
+  String get syncFolderPath => '同步文件夹路径';
+  @override
+  String get folderSize => '文件夹大小';
+  @override
+  String get notConfigured => '该设备尚未设置同步文件夹';
+  @override
+  String get queryFailed => '查询设备信息失败';
+  @override
+  String get querying => '查询中…';
 }
 
 // Path: settingsTab.general.brightnessOptions

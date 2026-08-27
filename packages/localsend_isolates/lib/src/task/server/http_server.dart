@@ -1,3 +1,4 @@
+import 'package:localsend_isolates/rust/api/http.dart';
 import 'package:localsend_isolates/rust/api/model.dart';
 import 'package:localsend_isolates/rust/api/server.dart';
 import 'package:refena_flutter/refena_flutter.dart';
@@ -120,6 +121,12 @@ class HttpServerService {
   /// Does nothing if the download was already answered via [respondFileDownload].
   Future<void> failFileDownload({required String sessionId, required String fileId}) async {
     await _requireServer().failFileDownload(sessionId: sessionId, fileId: fileId);
+  }
+
+  /// Answers a pending sync-folder-info request with the sync folder
+  /// information of this device. `null` responds with 204 (no sync folder configured).
+  Future<void> respondSyncFolderInfo({required SyncFolderInfoDtoV2? info}) async {
+    await _requireServer().respondSyncFolderInfo(info: info);
   }
 
   /// Stops the server. The event stream returned by [start] will end.

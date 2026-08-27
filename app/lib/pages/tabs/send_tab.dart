@@ -199,6 +199,16 @@ class SendTab extends StatelessWidget {
                 ),
               ],
             ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10, left: _horizontalPadding, right: _horizontalPadding),
+              child: Center(
+                child: OutlinedButton.icon(
+                  onPressed: () async => vm.onTapAddress(context),
+                  icon: const Icon(Icons.link),
+                  label: Text(t.sendTab.sendViaLink),
+                ),
+              ),
+            ),
             if (vm.nearbyDevices.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(bottom: 10, left: _horizontalPadding, right: _horizontalPadding),

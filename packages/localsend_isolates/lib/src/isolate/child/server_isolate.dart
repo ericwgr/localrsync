@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/model/dto/multicast_dto.dart';
 import 'package:localsend_isolates/model/file_type.dart';
+import 'package:localsend_isolates/rust/api/http.dart' show SyncFolderInfoDtoV2;
 import 'package:localsend_isolates/rust/api/model.dart' show FileDto;
 import 'package:localsend_isolates/rust/api/server.dart';
 import 'package:localsend_isolates/src/isolate/child/main.dart';
@@ -103,6 +104,17 @@ class HttpServerPrepareUploadDecisionTask implements BaseHttpServerTask {
 
   HttpServerPrepareUploadDecisionTask({
     required this.config,
+  });
+}
+
+/// Answers a pending [HttpServerSyncFolderInfoRequestedEvent].
+class HttpServerSyncFolderInfoTask implements BaseHttpServerTask {
+  /// The sync folder information of this device.
+  /// `null` responds with 204 (no sync folder configured).
+  final SyncFolderInfoDtoV2? info;
+
+  HttpServerSyncFolderInfoTask({
+    required this.info,
   });
 }
 
@@ -294,6 +306,24 @@ class HttpServerCancelReceivedEvent extends HttpServerEvent {
   HttpServerCancelReceivedEvent({
     required this.ip,
     required this.sessionId,
+  });
+}
+
+/// A device requests the sync folder information via
+/// `POST /api/localsend/v2/sync-folder-info`.
+/// Must be answered with a [HttpServerSyncFolderInfoTask].
+class HttpServerSyncFolderInfoRequestedEvent extends HttpServerEvent {
+  /// The IP address of the requesting device.
+  final String ip;
+
+  /// The SHA-256 fingerprint (uppercase hex) of the requester's client
+  /// certificate verified during the mTLS handshake.
+  /// `null` when the server runs without TLS.
+  final String? certFingerprint;
+
+  HttpServerSyncFolderInfoRequestedEvent({
+    required this.ip,
+    required this.certFingerprint,
   });
 }
 
@@ -545,6 +575,13 @@ Future<void> setupHttpServerIsolate(
                 case RsServerEvent_ListenerFailed(:final error):
                   ref.read(_receiveSessionProvider).session = null;
                   emit(HttpServerListenerFailedEvent(error: error));
+                case RsServerEvent_SyncFolderInfoRequested(:final ip, :final certFingerprint):
+                  emit(
+                    HttpServerSyncFolderInfoRequestedEvent(
+                      ip: ip,
+                      certFingerprint: certFingerprint,
+                    ),
+                  );
               }
             }
           } finally {
@@ -604,6 +641,9 @@ Future<void> setupHttpServerIsolate(
                 sessionId: failTask.sessionId,
                 fileId: failTask.fileId,
               );
+          return;
+        case HttpServerSyncFolderInfoTask syncFolderInfoTask:
+          await ref.read(httpServerProvider).respondSyncFolderInfo(info: syncFolderInfoTask.info);
           return;
       }
     },

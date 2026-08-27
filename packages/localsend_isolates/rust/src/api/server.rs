@@ -1,6 +1,6 @@
 use crate::frb_generated::StreamSink;
 use flutter_rust_bridge::frb;
-pub use localsend::http::dto_v2::RegisterDtoV2;
+pub use localsend::http::dto_v2::{RegisterDtoV2, SyncFolderInfoDtoV2};
 use localsend::http::server::ServerConfigV2;
 pub use localsend::http::server::TlsConfig;
 use localsend::http::server::common::save::FileUploadTarget;
@@ -107,6 +107,19 @@ pub enum RsServerEvent {
         /// Description of the failure.
         error: String,
     },
+
+    /// A device requests the sync folder information via
+    /// `POST /api/localsend/v2/sync-folder-info`.
+    ///
+    /// Must be answered with [RsHttpServer::respond_sync_folder_info].
+    SyncFolderInfoRequested {
+        /// The IP address of the requesting device.
+        ip: String,
+        /// The SHA-256 fingerprint (uppercase hex) of the requester's client
+        /// certificate verified during the mTLS handshake. `None` when the
+        /// server runs without TLS.
+        cert_fingerprint: Option<String>,
+    },
 }
 
 pub struct RsHttpServer {
@@ -117,6 +130,7 @@ pub struct RsHttpServer {
     web_event_rx: Mutex<Option<mpsc::Receiver<WebDownloadEvent>>>,
     pending_download_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_downloads: Mutex<HashMap<(String, String), oneshot::Sender<FileContent>>>,
+    pending_sync_folder_info: Mutex<Option<oneshot::Sender<Option<SyncFolderInfoDtoV2>>>>,
     internal_event_rx: Mutex<Option<mpsc::Receiver<InternalEvent>>>,
 }
 
@@ -288,6 +302,7 @@ pub async fn start_server(
         web_event_rx: Mutex::new(web_event_rx),
         pending_download_decisions: Mutex::new(HashMap::new()),
         pending_downloads: Mutex::new(HashMap::new()),
+        pending_sync_folder_info: Mutex::new(None),
         internal_event_rx: Mutex::new(internal_event_rx),
     })
 }
@@ -432,6 +447,18 @@ impl RsHttpServer {
                 .is_ok(),
             ServerEventV2::ListenerFailed { error } => {
                 sink.add(RsServerEvent::ListenerFailed { error }).is_ok()
+            }
+            ServerEventV2::SyncFolderInfoRequested {
+                ip,
+                cert_fingerprint,
+                response_tx,
+            } => {
+                *self.pending_sync_folder_info.lock().await = Some(response_tx);
+                sink.add(RsServerEvent::SyncFolderInfoRequested {
+                    ip: ip.to_string(),
+                    cert_fingerprint,
+                })
+                .is_ok()
             }
         }
     }
@@ -656,6 +683,25 @@ impl RsHttpServer {
             .lock()
             .await
             .remove(&(session_id, file_id));
+    }
+
+    /// Answers the pending [RsServerEvent::SyncFolderInfoRequested] event.
+    ///
+    /// Passing `Some(info)` responds with 200 and the folder details.
+    /// Passing `None` responds with 204 (no sync folder configured).
+    pub async fn respond_sync_folder_info(
+        &self,
+        info: Option<SyncFolderInfoDtoV2>,
+    ) -> anyhow::Result<()> {
+        let Some(response_tx) = self.pending_sync_folder_info.lock().await.take() else {
+            return Err(anyhow::anyhow!("No pending sync-folder-info request"));
+        };
+
+        response_tx
+            .send(info)
+            .map_err(|_| anyhow::anyhow!("Sync-folder-info request already ended"))?;
+
+        Ok(())
     }
 
     /// Cancels the active upload session, e.g. because the user aborted the

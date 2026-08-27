@@ -52,7 +52,15 @@
       "favorites": "Favorites",
       "on": "@:general.on"
     },
-    "link": "Receive via link"
+    "link": "Receive via link",
+    "syncFolder": {
+      "choose": "Set sync folder",
+      "calculating": "Calculating folder size…",
+      "unavailable": "Size unavailable",
+      "refresh": "Refresh folder size",
+      "change": "Change folder",
+      "sync": "Sync"
+    }
   },
   "sendTab": {
     "title": "Send",
@@ -74,6 +82,7 @@
     "thisDevice": "This Device",
     "scan": "Search devices",
     "manualSending": "Manual sending",
+    "sendViaLink": "Send via link",
     "sendMode": "Send mode",
     "sendModes": {
       "single": "Single recipient",
@@ -149,6 +158,15 @@
       "encryption": "Encryption",
       "multicastGroup": "Multicast address",
       "multicastGroupWarning": "You might not be detected by other devices because you are using a custom multicast address. (default: {defaultMulticast})"
+    },
+    "permissions": {
+      "title": "File access",
+      "allFilesAccess": "All files access",
+      "fullDiskAccess": "Full disk access",
+      "granted": "Granted",
+      "request": "Request",
+      "openSettings": "Open settings",
+      "recheck": "Recheck"
     },
     "other": {
       "title": "Other",
@@ -418,6 +436,13 @@
       "title": "Enter address",
       "recentlyUsed": "Recently used: "
     },
+    "folderPicker": {
+      "title": "Select folder",
+      "up": "Go up",
+      "use": "Use this folder",
+      "empty": "This folder is empty",
+      "unreadable": "This folder is not accessible"
+    },
     "cancelSession": {
       "title": "Cancel files transfer",
       "content": "Do you really want to cancel the files transfer?"
@@ -471,6 +496,15 @@
       "description": "LocalSend can't find other devices without having the permission to scan the local network. Please grant this permission in the settings.",
       "gotoSettings": "Settings"
     },
+    "permissionsRequired": {
+      "titleAllFiles": "All files access required",
+      "descriptionAllFiles": "To access all files on this device, please allow \"All files access\" for LocalSend in the system settings.",
+      "titleFullDisk": "Full disk access required",
+      "descriptionFullDisk": "To access all files in your user directory, please allow Full Disk Access for LocalSend in System Settings → Privacy & Security.",
+      "openSettings": "Open settings",
+      "recheck": "Recheck",
+      "later": "Later"
+    },
     "messageInput": {
       "title": "Type message",
       "multiline": "Multiline"
@@ -519,6 +553,23 @@
     },
     "zoom": {
       "title": "URL"
+    },
+    "syncDevice": {
+      "title": "Device sync",
+      "chooseDevice": "Choose device",
+      "inputHint": "IP address or http(s) URL",
+      "connect": "Connect",
+      "nearbyDevices": "Nearby devices",
+      "noDevicesFound": "No nearby devices found",
+      "addressNotFound": "No device found at this address",
+      "next": "Next",
+      "back": "Back",
+      "deviceDetails": "Device details",
+      "syncFolderPath": "Sync folder path",
+      "folderSize": "Folder size",
+      "notConfigured": "This device has not set a sync folder",
+      "queryFailed": "Failed to query the device",
+      "querying": "Querying…"
     }
   },
   "sanitization": {

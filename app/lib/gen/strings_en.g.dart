@@ -214,6 +214,8 @@ class Translations$receiveTab$en {
 
   /// en: 'Receive via link'
   String get link => 'Receive via link';
+
+  late final Translations$receiveTab$syncFolder$en syncFolder = Translations$receiveTab$syncFolder$en.internal(_root);
 }
 
 // Path: sendTab
@@ -245,6 +247,9 @@ class Translations$sendTab$en {
   /// en: 'Manual sending'
   String get manualSending => 'Manual sending';
 
+  /// en: 'Send via link'
+  String get sendViaLink => 'Send via link';
+
   /// en: 'Send mode'
   String get sendMode => 'Send mode';
 
@@ -275,6 +280,7 @@ class Translations$settingsTab$en {
   late final Translations$settingsTab$receive$en receive = Translations$settingsTab$receive$en.internal(_root);
   late final Translations$settingsTab$send$en send = Translations$settingsTab$send$en.internal(_root);
   late final Translations$settingsTab$network$en network = Translations$settingsTab$network$en.internal(_root);
+  late final Translations$settingsTab$permissions$en permissions = Translations$settingsTab$permissions$en.internal(_root);
   late final Translations$settingsTab$other$en other = Translations$settingsTab$other$en.internal(_root);
 
   /// en: 'Advanced settings'
@@ -758,6 +764,7 @@ class Translations$dialogs$en {
   late final Translations$dialogs$addFile$en addFile = Translations$dialogs$addFile$en.internal(_root);
   late final Translations$dialogs$openFile$en openFile = Translations$dialogs$openFile$en.internal(_root);
   late final Translations$dialogs$addressInput$en addressInput = Translations$dialogs$addressInput$en.internal(_root);
+  late final Translations$dialogs$folderPicker$en folderPicker = Translations$dialogs$folderPicker$en.internal(_root);
   late final Translations$dialogs$cancelSession$en cancelSession = Translations$dialogs$cancelSession$en.internal(_root);
   late final Translations$dialogs$cannotOpenFile$en cannotOpenFile = Translations$dialogs$cannotOpenFile$en.internal(_root);
   late final Translations$dialogs$encryptionDisabledNotice$en encryptionDisabledNotice = Translations$dialogs$encryptionDisabledNotice$en.internal(
@@ -773,6 +780,7 @@ class Translations$dialogs$en {
   late final Translations$dialogs$localNetworkUnauthorized$en localNetworkUnauthorized = Translations$dialogs$localNetworkUnauthorized$en.internal(
     _root,
   );
+  late final Translations$dialogs$permissionsRequired$en permissionsRequired = Translations$dialogs$permissionsRequired$en.internal(_root);
   late final Translations$dialogs$messageInput$en messageInput = Translations$dialogs$messageInput$en.internal(_root);
   late final Translations$dialogs$noFiles$en noFiles = Translations$dialogs$noFiles$en.internal(_root);
   late final Translations$dialogs$noPermission$en noPermission = Translations$dialogs$noPermission$en.internal(_root);
@@ -785,6 +793,7 @@ class Translations$dialogs$en {
   late final Translations$dialogs$pin$en pin = Translations$dialogs$pin$en.internal(_root);
   late final Translations$dialogs$sendModeHelp$en sendModeHelp = Translations$dialogs$sendModeHelp$en.internal(_root);
   late final Translations$dialogs$zoom$en zoom = Translations$dialogs$zoom$en.internal(_root);
+  late final Translations$dialogs$syncDevice$en syncDevice = Translations$dialogs$syncDevice$en.internal(_root);
 }
 
 // Path: sanitization
@@ -981,6 +990,33 @@ class Translations$receiveTab$quickSave$en {
 
   /// en: 'On'
   String get on => _root.general.on;
+}
+
+// Path: receiveTab.syncFolder
+class Translations$receiveTab$syncFolder$en {
+  Translations$receiveTab$syncFolder$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Set sync folder'
+  String get choose => 'Set sync folder';
+
+  /// en: 'Calculating folder size…'
+  String get calculating => 'Calculating folder size…';
+
+  /// en: 'Size unavailable'
+  String get unavailable => 'Size unavailable';
+
+  /// en: 'Refresh folder size'
+  String get refresh => 'Refresh folder size';
+
+  /// en: 'Change folder'
+  String get change => 'Change folder';
+
+  /// en: 'Sync'
+  String get sync => 'Sync';
 }
 
 // Path: sendTab.selection
@@ -1211,6 +1247,36 @@ class Translations$settingsTab$network$en {
   /// en: 'You might not be detected by other devices because you are using a custom multicast address. (default: {defaultMulticast})'
   String multicastGroupWarning({required Object defaultMulticast}) =>
       'You might not be detected by other devices because you are using a custom multicast address. (default: ${defaultMulticast})';
+}
+
+// Path: settingsTab.permissions
+class Translations$settingsTab$permissions$en {
+  Translations$settingsTab$permissions$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'File access'
+  String get title => 'File access';
+
+  /// en: 'All files access'
+  String get allFilesAccess => 'All files access';
+
+  /// en: 'Full disk access'
+  String get fullDiskAccess => 'Full disk access';
+
+  /// en: 'Granted'
+  String get granted => 'Granted';
+
+  /// en: 'Request'
+  String get request => 'Request';
+
+  /// en: 'Open settings'
+  String get openSettings => 'Open settings';
+
+  /// en: 'Recheck'
+  String get recheck => 'Recheck';
 }
 
 // Path: settingsTab.other
@@ -1453,6 +1519,30 @@ class Translations$dialogs$addressInput$en {
   String get recentlyUsed => 'Recently used: ';
 }
 
+// Path: dialogs.folderPicker
+class Translations$dialogs$folderPicker$en {
+  Translations$dialogs$folderPicker$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Select folder'
+  String get title => 'Select folder';
+
+  /// en: 'Go up'
+  String get up => 'Go up';
+
+  /// en: 'Use this folder'
+  String get use => 'Use this folder';
+
+  /// en: 'This folder is empty'
+  String get empty => 'This folder is empty';
+
+  /// en: 'This folder is not accessible'
+  String get unreadable => 'This folder is not accessible';
+}
+
 // Path: dialogs.cancelSession
 class Translations$dialogs$cancelSession$en {
   Translations$dialogs$cancelSession$en.internal(this._root);
@@ -1646,6 +1736,37 @@ class Translations$dialogs$localNetworkUnauthorized$en {
   String get gotoSettings => 'Settings';
 }
 
+// Path: dialogs.permissionsRequired
+class Translations$dialogs$permissionsRequired$en {
+  Translations$dialogs$permissionsRequired$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'All files access required'
+  String get titleAllFiles => 'All files access required';
+
+  /// en: 'To access all files on this device, please allow "All files access" for LocalSend in the system settings.'
+  String get descriptionAllFiles => 'To access all files on this device, please allow "All files access" for LocalSend in the system settings.';
+
+  /// en: 'Full disk access required'
+  String get titleFullDisk => 'Full disk access required';
+
+  /// en: 'To access all files in your user directory, please allow Full Disk Access for LocalSend in System Settings → Privacy & Security.'
+  String get descriptionFullDisk =>
+      'To access all files in your user directory, please allow Full Disk Access for LocalSend in System Settings → Privacy & Security.';
+
+  /// en: 'Open settings'
+  String get openSettings => 'Open settings';
+
+  /// en: 'Recheck'
+  String get recheck => 'Recheck';
+
+  /// en: 'Later'
+  String get later => 'Later';
+}
+
 // Path: dialogs.messageInput
 class Translations$dialogs$messageInput$en {
   Translations$dialogs$messageInput$en.internal(this._root);
@@ -1819,6 +1940,60 @@ class Translations$dialogs$zoom$en {
 
   /// en: 'URL'
   String get title => 'URL';
+}
+
+// Path: dialogs.syncDevice
+class Translations$dialogs$syncDevice$en {
+  Translations$dialogs$syncDevice$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Device sync'
+  String get title => 'Device sync';
+
+  /// en: 'Choose device'
+  String get chooseDevice => 'Choose device';
+
+  /// en: 'IP address or http(s) URL'
+  String get inputHint => 'IP address or http(s) URL';
+
+  /// en: 'Connect'
+  String get connect => 'Connect';
+
+  /// en: 'Nearby devices'
+  String get nearbyDevices => 'Nearby devices';
+
+  /// en: 'No nearby devices found'
+  String get noDevicesFound => 'No nearby devices found';
+
+  /// en: 'No device found at this address'
+  String get addressNotFound => 'No device found at this address';
+
+  /// en: 'Next'
+  String get next => 'Next';
+
+  /// en: 'Back'
+  String get back => 'Back';
+
+  /// en: 'Device details'
+  String get deviceDetails => 'Device details';
+
+  /// en: 'Sync folder path'
+  String get syncFolderPath => 'Sync folder path';
+
+  /// en: 'Folder size'
+  String get folderSize => 'Folder size';
+
+  /// en: 'This device has not set a sync folder'
+  String get notConfigured => 'This device has not set a sync folder';
+
+  /// en: 'Failed to query the device'
+  String get queryFailed => 'Failed to query the device';
+
+  /// en: 'Querying…'
+  String get querying => 'Querying…';
 }
 
 // Path: settingsTab.general.brightnessOptions

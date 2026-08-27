@@ -629,6 +629,13 @@ async fn handle_request_inner(mut req: Request<Incoming>) -> Result<Response<Box
 
             v2::cancel(req, state, client_info).await
         }
+        (&Method::POST, "/api/localsend/v2/sync-folder-info") => {
+            if !v2_enabled {
+                return Err(AppError::Status(StatusCode::NOT_FOUND));
+            }
+
+            v2::sync_folder_info(state, client_info).await
+        }
         // The versioned path is retained for compatibility, but this endpoint is internal.
         (&Method::POST, "/api/localsend/v2/show") => internal::show(req, state).await,
         (&Method::POST, "/api/localsend/v3/nonce") => {

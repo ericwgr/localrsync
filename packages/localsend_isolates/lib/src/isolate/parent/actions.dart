@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:localsend_isolates/model/device.dart';
+import 'package:localsend_isolates/rust/api/http.dart' show SyncFolderInfoDtoV2;
 import 'package:localsend_isolates/rust/api/server.dart' show WebParams;
 import 'package:localsend_isolates/src/isolate/child/discovery_isolate.dart';
 import 'package:localsend_isolates/src/isolate/child/server_isolate.dart';
@@ -420,6 +421,38 @@ class IsolateHttpServerCancelSessionAction extends ReduxAction<IsolateController
         data: IsolateTask(
           data: HttpServerCancelSessionTask(
             sessionId: sessionId,
+          ),
+        ),
+      ),
+    );
+
+    return state;
+  }
+}
+
+/// Answers a pending [HttpServerSyncFolderInfoRequestedEvent] with the sync
+/// folder information of this device. `null` responds with 204 (no sync
+/// folder configured).
+class IsolateHttpServerSyncFolderInfoAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final SyncFolderInfoDtoV2? info;
+
+  IsolateHttpServerSyncFolderInfoAction({
+    required this.info,
+  });
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) {
+      throw StateError('httpServer is not initialized');
+    }
+
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(
+          data: HttpServerSyncFolderInfoTask(
+            info: info,
           ),
         ),
       ),

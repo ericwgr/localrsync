@@ -13,6 +13,7 @@ export 'package:localsend_isolates/src/isolate/child/server_isolate.dart'
         HttpServerSessionEndEvent,
         HttpServerShowEvent,
         HttpServerStartedEvent,
+        HttpServerSyncFolderInfoRequestedEvent,
         HttpServerWebFileDownloadEvent,
         HttpServerWebPrepareDownloadEvent;
 export 'package:localsend_isolates/src/isolate/child/sync_provider.dart';

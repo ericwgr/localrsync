@@ -8,6 +8,8 @@ import 'package:localsend_app/model/persistence/color_mode.dart';
 import 'package:localsend_app/pages/about/about_page.dart';
 import 'package:localsend_app/pages/changelog_page.dart';
 import 'package:localsend_app/pages/donation/donation_page.dart';
+import 'package:localsend_app/pages/home_page.dart';
+import 'package:localsend_app/pages/home_page_controller.dart';
 import 'package:localsend_app/pages/settings/network_interfaces_page.dart';
 import 'package:localsend_app/pages/tabs/settings_tab_controller.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
@@ -35,11 +37,34 @@ import 'package:refena_flutter/refena_flutter.dart';
 import 'package:routerino/routerino.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SettingsTab extends StatelessWidget {
+class SettingsTab extends StatefulWidget {
   const SettingsTab();
 
   @override
+  State<SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends State<SettingsTab> {
+  /// Whether the previous build ran while the settings tab was active,
+  /// so that the permission check only runs when the tab becomes visible.
+  bool _wasActive = false;
+
+  @override
   Widget build(BuildContext context) {
+    final isActive = context.watch(homePageControllerProvider).currentTab == HomeTab.settings;
+    if (isActive && !_wasActive) {
+      _wasActive = true;
+      // Runs after the frame so the tab switch is not blocked by the dialog.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // ignore: discarded_futures
+          context.read(settingsTabControllerProvider).onTabEntered(context);
+        }
+      });
+    } else if (!isActive) {
+      _wasActive = false;
+    }
+
     return ViewModelBuilder(
       provider: (ref) => settingsTabControllerProvider,
       builder: (context, vm) {
@@ -147,6 +172,24 @@ class SettingsTab extends StatelessWidget {
                 ),
               ],
             ),
+            if (Platform.isAndroid || Platform.isMacOS)
+              _SettingsSection(
+                title: t.settingsTab.permissions.title,
+                children: [
+                  if (Platform.isAndroid)
+                    _ButtonEntry(
+                      label: t.settingsTab.permissions.allFilesAccess,
+                      buttonLabel: vm.allFilesAccessGranted ? t.settingsTab.permissions.granted : t.settingsTab.permissions.request,
+                      onTap: () => vm.onCheckPermission(context),
+                    ),
+                  if (Platform.isMacOS)
+                    _ButtonEntry(
+                      label: t.settingsTab.permissions.fullDiskAccess,
+                      buttonLabel: vm.fullDiskAccessGranted ? t.settingsTab.permissions.granted : t.settingsTab.permissions.openSettings,
+                      onTap: () => vm.onCheckPermission(context),
+                    ),
+                ],
+              ),
             _SettingsSection(
               title: t.settingsTab.receive.title,
               children: [

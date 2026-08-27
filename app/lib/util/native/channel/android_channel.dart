@@ -49,8 +49,40 @@ Future<String?> getDownloadsDirectoryAndroid() async {
   }
 }
 
+Future<String> getExternalStorageRootAndroid() async {
+  return await _methodChannel.invokeMethod<String>('getExternalStorageRoot') ?? '/storage/emulated/0';
+}
+
+Future<List<String>> listExternalStorageDirectoriesAndroid(String path) async {
+  final result = await _methodChannel.invokeMethod<List>('listExternalStorageDirectories', {'path': path});
+  return result?.whereType<String>().toList(growable: false) ?? const [];
+}
+
 Future<bool> getSystemAnimationsStatusAndroid() async {
   return await _methodChannel.invokeMethod('isAnimationsEnabled') ?? true;
+}
+
+/// Whether "All files access" is granted (MANAGE_EXTERNAL_STORAGE on Android 11+,
+/// WRITE_EXTERNAL_STORAGE on older versions).
+Future<bool> hasAllFilesAccessPermissionAndroid() async {
+  try {
+    return await _methodChannel.invokeMethod<bool>('hasAllFilesAccess') ?? false;
+  } catch (e) {
+    _logger.warning('Could not check all files access', e);
+    return false;
+  }
+}
+
+/// Opens the system "All files access" settings screen (Android 11+) or requests
+/// WRITE_EXTERNAL_STORAGE on older versions. Resolves with the granted state
+/// once the user leaves the system screen.
+Future<bool> requestAllFilesAccessPermissionAndroid() async {
+  try {
+    return await _methodChannel.invokeMethod<bool>('requestAllFilesAccess') ?? false;
+  } catch (e) {
+    _logger.warning('Could not request all files access', e);
+    return false;
+  }
 }
 
 /// Requests the "Nearby devices" permission gating local network access on Android 17+.

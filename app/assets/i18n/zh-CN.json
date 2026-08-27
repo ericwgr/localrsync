@@ -52,7 +52,15 @@
       "favorites": "收藏夹",
       "on": "@:general.on"
     },
-    "link": "通过链接接收"
+    "link": "通过链接接收",
+    "syncFolder": {
+      "choose": "设置同步文件夹",
+      "calculating": "正在计算文件夹大小…",
+      "unavailable": "无法获取文件夹大小",
+      "refresh": "重新获取文件夹大小",
+      "change": "更换文件夹",
+      "sync": "同步"
+    }
   },
   "sendTab": {
     "title": "发送",
@@ -74,6 +82,7 @@
     "thisDevice": "这台设备",
     "scan": "扫描设备",
     "manualSending": "手动发送",
+    "sendViaLink": "通过链接发送",
     "sendMode": "发送模式",
     "sendModes": {
       "single": "一个接收者",
@@ -149,6 +158,15 @@
       "encryption": "加密",
       "multicastGroup": "多播",
       "multicastGroupWarning": "由于正在使用自定义多播地址，你可能不会被其他设备检测到。（默认地址：{defaultMulticast}）"
+    },
+    "permissions": {
+      "title": "文件访问权限",
+      "allFilesAccess": "所有文件访问",
+      "fullDiskAccess": "完整磁盘访问",
+      "granted": "已授予",
+      "request": "前往设置",
+      "openSettings": "打开系统设置",
+      "recheck": "重新检查"
     },
     "other": {
       "title": "其他",
@@ -417,6 +435,13 @@
       "title": "输入地址",
       "recentlyUsed": "最近使用： "
     },
+    "folderPicker": {
+      "title": "选择文件夹",
+      "up": "返回上一级",
+      "use": "选择此文件夹",
+      "empty": "此文件夹为空",
+      "unreadable": "无法访问此文件夹"
+    },
     "cancelSession": {
       "title": "取消文件传输",
       "content": "要取消文件传输吗？"
@@ -470,6 +495,15 @@
       "description": "LocalSend 在没有扫描本地网络的权限的情况下无法找到其他设备。请在设置中授予此权限。",
       "gotoSettings": "设置"
     },
+    "permissionsRequired": {
+      "titleAllFiles": "需要「所有文件访问」权限",
+      "descriptionAllFiles": "为了访问设备上的所有文件，请在系统设置中为本应用开启「所有文件访问」权限。",
+      "titleFullDisk": "需要「完整磁盘访问」权限",
+      "descriptionFullDisk": "为了访问您用户目录中的所有文件，请在「系统设置 → 隐私与安全性 → 完整磁盘访问」中允许本应用。",
+      "openSettings": "打开系统设置",
+      "recheck": "重新检查",
+      "later": "稍后"
+    },
     "messageInput": {
       "title": "输入消息",
       "multiline": "多行"
@@ -518,6 +552,23 @@
     },
     "zoom": {
       "title": "URL"
+    },
+    "syncDevice": {
+      "title": "设备同步",
+      "chooseDevice": "选择设备",
+      "inputHint": "IP 地址或 http(s) 链接",
+      "connect": "连接",
+      "nearbyDevices": "附近设备",
+      "noDevicesFound": "未发现附近设备",
+      "addressNotFound": "在该地址未找到设备",
+      "next": "下一步",
+      "back": "上一步",
+      "deviceDetails": "设备详情",
+      "syncFolderPath": "同步文件夹路径",
+      "folderSize": "文件夹大小",
+      "notConfigured": "该设备尚未设置同步文件夹",
+      "queryFailed": "查询设备信息失败",
+      "querying": "查询中…"
     }
   },
   "sanitization": {

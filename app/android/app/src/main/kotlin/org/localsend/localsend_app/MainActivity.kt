@@ -27,6 +27,8 @@ private const val REQUEST_CODE_PICK_DIRECTORY = 1
 private const val REQUEST_CODE_PICK_DIRECTORY_PATH = 2
 private const val REQUEST_CODE_PICK_FILE = 3
 private const val REQUEST_CODE_LOCAL_NETWORK = 4
+private const val REQUEST_CODE_ALL_FILES_ACCESS = 5
+private const val REQUEST_CODE_WRITE_STORAGE = 6
 
 // Not available as a constant in compileSdk 36.
 private const val PERMISSION_ACCESS_LOCAL_NETWORK = "android.permission.ACCESS_LOCAL_NETWORK"
@@ -126,6 +128,14 @@ class MainActivity : FlutterActivity() {
                     result.success(getDownloadsDirectory())
                 }
 
+                "getExternalStorageRoot" -> {
+                    result.success(Environment.getExternalStorageDirectory().absolutePath)
+                }
+
+                "listExternalStorageDirectories" -> {
+                    handleListExternalStorageDirectories(call, result)
+                }
+
                 "requestLocalNetworkPermission" -> {
                     if (hasLocalNetworkPermission()) {
                         result.success(true)
@@ -133,6 +143,15 @@ class MainActivity : FlutterActivity() {
                         pendingPermissionResult = result
                         requestPermissions(arrayOf(PERMISSION_ACCESS_LOCAL_NETWORK), REQUEST_CODE_LOCAL_NETWORK)
                     }
+                }
+
+                "hasAllFilesAccess" -> {
+                    result.success(hasAllFilesAccess())
+                }
+
+                "requestAllFilesAccess" -> {
+                    pendingPermissionResult = result
+                    requestAllFilesAccessPermission()
                 }
 
                 else -> result.notImplemented()
@@ -148,11 +167,44 @@ class MainActivity : FlutterActivity() {
         return checkSelfPermission(PERMISSION_ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED
     }
 
+    /// Whether the app can access all files on the device:
+    /// the "All files access" setting (MANAGE_EXTERNAL_STORAGE) on Android 11+, WRITE_EXTERNAL_STORAGE before that.
+    private fun hasAllFilesAccess(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    /// Guides the user to the "All files access" switch in the system settings (Android 11+),
+    /// or requests the WRITE_EXTERNAL_STORAGE runtime permission on older versions.
+    /// The granted state is delivered asynchronously via [onActivityResult] / [onRequestPermissionsResult].
+    private fun requestAllFilesAccessPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName"))
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivityForResult(intent, REQUEST_CODE_ALL_FILES_ACCESS)
+            } else {
+                // Some OEMs do not support the app-specific intent; fall back to the global list of apps.
+                startActivityForResult(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION), REQUEST_CODE_ALL_FILES_ACCESS)
+            }
+        } else {
+            requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CODE_WRITE_STORAGE)
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_LOCAL_NETWORK) {
-            pendingPermissionResult?.success(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            pendingPermissionResult = null
+        when (requestCode) {
+            REQUEST_CODE_LOCAL_NETWORK -> {
+                pendingPermissionResult?.success(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                pendingPermissionResult = null
+            }
+            REQUEST_CODE_WRITE_STORAGE -> {
+                pendingPermissionResult?.success(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                pendingPermissionResult = null
+            }
         }
     }
 
@@ -160,6 +212,33 @@ class MainActivity : FlutterActivity() {
     @Suppress("DEPRECATION")
     private fun getDownloadsDirectory(): String {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+    }
+
+    private fun handleListExternalStorageDirectories(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        if (path == null) {
+            result.error("INVALID_ARGUMENT", "Missing directory path", null)
+            return
+        }
+
+        try {
+            val directory = java.io.File(path)
+            if (!directory.isDirectory) {
+                result.error("NOT_DIRECTORY", "$path is not a directory", null)
+                return
+            }
+            result.success(
+                directory.listFiles()
+                    ?.filter { it.isDirectory }
+                    ?.sortedBy { it.name.lowercase(Locale.ROOT) }
+                    ?.map { it.absolutePath }
+                    ?: emptyList<String>()
+            )
+        } catch (e: SecurityException) {
+            result.error("PERMISSION_DENIED", e.message ?: "Permission denied for $path", null)
+        } catch (e: Exception) {
+            result.error("LIST_FAILED", e.message ?: "Failed to list $path", null)
+        }
     }
 
     private fun isAnimationsEnabled() : Boolean {
@@ -322,6 +401,14 @@ class MainActivity : FlutterActivity() {
     @Override
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_ALL_FILES_ACCESS) {
+            // The "All files access" settings screen always returns RESULT_CANCELED by itself;
+            // what matters is the re-checked granted state after the user returned.
+            pendingPermissionResult?.success(hasAllFilesAccess())
+            pendingPermissionResult = null
+            return
+        }
+
         if (resultCode == Activity.RESULT_CANCELED) {
             pendingResult?.error("CANCELED", "Canceled", null)
             pendingResult = null

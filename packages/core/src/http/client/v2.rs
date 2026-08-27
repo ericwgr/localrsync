@@ -3,6 +3,7 @@ use crate::http::client::url::{ApiVersion, TargetUrl};
 use crate::http::dto_v2::{
     InfoResponseDtoV2, PrepareDownloadResponseDtoV2, PrepareUploadRequestDtoV2,
     PrepareUploadResponseDtoV2, PrepareUploadResultV2, RegisterDtoV2, RegisterResponseDtoV2,
+    SyncFolderInfoDtoV2, SyncFolderInfoResultV2,
 };
 use crate::model::discovery::ProtocolType;
 use futures_util::StreamExt;
@@ -341,6 +342,45 @@ impl LsHttpClientV2 {
         let body = res.json::<InfoResponseDtoV2>().await?;
 
         Ok(body)
+    }
+
+    /// Queries the sync folder information of another device.
+    ///
+    /// POST /api/localsend/v2/sync-folder-info
+    ///
+    /// This is a LocalRsync extension, not part of the LocalSend protocol
+    /// specification. Only answers peers that speak the v2 protocol.
+    ///
+    /// # Returns
+    /// [SyncFolderInfoResultV2::Info] with the folder details, or
+    /// [SyncFolderInfoResultV2::NotConfigured] when the peer responded with
+    /// 204 (no sync folder configured).
+    pub async fn sync_folder_info(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+    ) -> Result<SyncFolderInfoResultV2, ClientError> {
+        let url = TargetUrl {
+            version: ApiVersion::V2,
+            protocol: protocol.as_str(),
+            host: ip.to_string(),
+            port,
+            path: "/sync-folder-info",
+            params: &[],
+        }
+        .to_string();
+
+        let res = self.client.post(&url).send().await?;
+
+        match res.status() {
+            StatusCode::OK => {
+                let body = res.json::<SyncFolderInfoDtoV2>().await?;
+                Ok(SyncFolderInfoResultV2::Info(body))
+            }
+            StatusCode::NO_CONTENT => Ok(SyncFolderInfoResultV2::NotConfigured),
+            _ => res.into_error().await,
+        }
     }
 
     /// Prepares to download files from a sender (Download API).

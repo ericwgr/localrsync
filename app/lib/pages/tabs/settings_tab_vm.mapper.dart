@@ -88,6 +88,18 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
     'showInContextMenu',
     _$showInContextMenu,
   );
+  static bool _$allFilesAccessGranted(SettingsTabVm v) =>
+      v.allFilesAccessGranted;
+  static const Field<SettingsTabVm, bool> _f$allFilesAccessGranted = Field(
+    'allFilesAccessGranted',
+    _$allFilesAccessGranted,
+  );
+  static bool _$fullDiskAccessGranted(SettingsTabVm v) =>
+      v.fullDiskAccessGranted;
+  static const Field<SettingsTabVm, bool> _f$fullDiskAccessGranted = Field(
+    'fullDiskAccessGranted',
+    _$fullDiskAccessGranted,
+  );
   static Function _$onChangeTheme(SettingsTabVm v) =>
       (v as dynamic).onChangeTheme as Function;
   static dynamic _arg$onChangeTheme(f) =>
@@ -174,6 +186,24 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
     _$onTapAdvanced,
     arg: _arg$onTapAdvanced,
   );
+  static Function _$onTabEntered(SettingsTabVm v) =>
+      (v as dynamic).onTabEntered as Function;
+  static dynamic _arg$onTabEntered(f) =>
+      f<Future<void> Function(BuildContext)>();
+  static const Field<SettingsTabVm, Function> _f$onTabEntered = Field(
+    'onTabEntered',
+    _$onTabEntered,
+    arg: _arg$onTabEntered,
+  );
+  static Function _$onCheckPermission(SettingsTabVm v) =>
+      (v as dynamic).onCheckPermission as Function;
+  static dynamic _arg$onCheckPermission(f) =>
+      f<Future<void> Function(BuildContext)>();
+  static const Field<SettingsTabVm, Function> _f$onCheckPermission = Field(
+    'onCheckPermission',
+    _$onCheckPermission,
+    arg: _arg$onCheckPermission,
+  );
   static List<ThemeMode> _$themeModes(SettingsTabVm v) => v.themeModes;
   static const Field<SettingsTabVm, List<ThemeMode>> _f$themeModes = Field(
     'themeModes',
@@ -196,6 +226,8 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
     #autoStart: _f$autoStart,
     #autoStartLaunchHidden: _f$autoStartLaunchHidden,
     #showInContextMenu: _f$showInContextMenu,
+    #allFilesAccessGranted: _f$allFilesAccessGranted,
+    #fullDiskAccessGranted: _f$fullDiskAccessGranted,
     #onChangeTheme: _f$onChangeTheme,
     #onChangeColorMode: _f$onChangeColorMode,
     #onTapLanguage: _f$onTapLanguage,
@@ -206,6 +238,8 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
     #onTapStartServer: _f$onTapStartServer,
     #onTapStopServer: _f$onTapStopServer,
     #onTapAdvanced: _f$onTapAdvanced,
+    #onTabEntered: _f$onTabEntered,
+    #onCheckPermission: _f$onCheckPermission,
     #themeModes: _f$themeModes,
   };
 
@@ -224,6 +258,8 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
       autoStart: data.dec(_f$autoStart),
       autoStartLaunchHidden: data.dec(_f$autoStartLaunchHidden),
       showInContextMenu: data.dec(_f$showInContextMenu),
+      allFilesAccessGranted: data.dec(_f$allFilesAccessGranted),
+      fullDiskAccessGranted: data.dec(_f$fullDiskAccessGranted),
       onChangeTheme: data.dec(_f$onChangeTheme),
       onChangeColorMode: data.dec(_f$onChangeColorMode),
       onTapLanguage: data.dec(_f$onTapLanguage),
@@ -234,6 +270,8 @@ class SettingsTabVmMapper extends ClassMapperBase<SettingsTabVm> {
       onTapStartServer: data.dec(_f$onTapStartServer),
       onTapStopServer: data.dec(_f$onTapStopServer),
       onTapAdvanced: data.dec(_f$onTapAdvanced),
+      onTabEntered: data.dec(_f$onTabEntered),
+      onCheckPermission: data.dec(_f$onCheckPermission),
     );
   }
 
@@ -317,6 +355,8 @@ abstract class SettingsTabVmCopyWith<$R, $In extends SettingsTabVm, $Out>
     bool? autoStart,
     bool? autoStartLaunchHidden,
     bool? showInContextMenu,
+    bool? allFilesAccessGranted,
+    bool? fullDiskAccessGranted,
     void Function(BuildContext, ThemeMode)? onChangeTheme,
     void Function(BuildContext, ColorMode)? onChangeColorMode,
     void Function(BuildContext)? onTapLanguage,
@@ -327,6 +367,8 @@ abstract class SettingsTabVmCopyWith<$R, $In extends SettingsTabVm, $Out>
     void Function(BuildContext)? onTapStartServer,
     void Function()? onTapStopServer,
     void Function(bool)? onTapAdvanced,
+    Future<void> Function(BuildContext)? onTabEntered,
+    Future<void> Function(BuildContext)? onCheckPermission,
   });
   SettingsTabVmCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -367,6 +409,8 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
     bool? autoStart,
     bool? autoStartLaunchHidden,
     bool? showInContextMenu,
+    bool? allFilesAccessGranted,
+    bool? fullDiskAccessGranted,
     void Function(BuildContext, ThemeMode)? onChangeTheme,
     void Function(BuildContext, ColorMode)? onChangeColorMode,
     void Function(BuildContext)? onTapLanguage,
@@ -377,6 +421,8 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
     void Function(BuildContext)? onTapStartServer,
     void Function()? onTapStopServer,
     void Function(bool)? onTapAdvanced,
+    Future<void> Function(BuildContext)? onTabEntered,
+    Future<void> Function(BuildContext)? onCheckPermission,
   }) => $apply(
     FieldCopyWithData({
       if (advanced != null) #advanced: advanced,
@@ -395,6 +441,10 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
       if (autoStartLaunchHidden != null)
         #autoStartLaunchHidden: autoStartLaunchHidden,
       if (showInContextMenu != null) #showInContextMenu: showInContextMenu,
+      if (allFilesAccessGranted != null)
+        #allFilesAccessGranted: allFilesAccessGranted,
+      if (fullDiskAccessGranted != null)
+        #fullDiskAccessGranted: fullDiskAccessGranted,
       if (onChangeTheme != null) #onChangeTheme: onChangeTheme,
       if (onChangeColorMode != null) #onChangeColorMode: onChangeColorMode,
       if (onTapLanguage != null) #onTapLanguage: onTapLanguage,
@@ -407,6 +457,8 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
       if (onTapStartServer != null) #onTapStartServer: onTapStartServer,
       if (onTapStopServer != null) #onTapStopServer: onTapStopServer,
       if (onTapAdvanced != null) #onTapAdvanced: onTapAdvanced,
+      if (onTabEntered != null) #onTabEntered: onTabEntered,
+      if (onCheckPermission != null) #onCheckPermission: onCheckPermission,
     }),
   );
   @override
@@ -439,6 +491,14 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
       #showInContextMenu,
       or: $value.showInContextMenu,
     ),
+    allFilesAccessGranted: data.get(
+      #allFilesAccessGranted,
+      or: $value.allFilesAccessGranted,
+    ),
+    fullDiskAccessGranted: data.get(
+      #fullDiskAccessGranted,
+      or: $value.fullDiskAccessGranted,
+    ),
     onChangeTheme: data.get(#onChangeTheme, or: $value.onChangeTheme),
     onChangeColorMode: data.get(
       #onChangeColorMode,
@@ -464,6 +524,11 @@ class _SettingsTabVmCopyWithImpl<$R, $Out>
     onTapStartServer: data.get(#onTapStartServer, or: $value.onTapStartServer),
     onTapStopServer: data.get(#onTapStopServer, or: $value.onTapStopServer),
     onTapAdvanced: data.get(#onTapAdvanced, or: $value.onTapAdvanced),
+    onTabEntered: data.get(#onTabEntered, or: $value.onTabEntered),
+    onCheckPermission: data.get(
+      #onCheckPermission,
+      or: $value.onCheckPermission,
+    ),
   );
 
   @override

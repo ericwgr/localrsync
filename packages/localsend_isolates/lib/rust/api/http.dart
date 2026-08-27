@@ -56,6 +56,12 @@ abstract class RsHttpClient implements RustOpaqueInterface {
     required RegisterDto payload,
   });
 
+  /// Queries the sync folder information of another device.
+  ///
+  /// POST /api/localsend/v2/sync-folder-info (LocalRsync extension).
+  /// Returns `null` when the peer has no sync folder configured (204).
+  Future<SyncFolderInfoDtoV2?> syncFolderInfo({required ProtocolType protocol, required String ip, required int port});
+
   /// Uploads a single file, emitting [RsUploadEvent]s on [sink].
   ///
   /// Failures are emitted as [RsUploadEvent::Failed] instead of being
@@ -154,4 +160,22 @@ sealed class RsUploadEvent with _$RsUploadEvent {
   const factory RsUploadEvent.failed({
     required RsHttpClientError error,
   }) = RsUploadEvent_Failed;
+}
+
+class SyncFolderInfoDtoV2 {
+  final String path;
+  final BigInt? sizeBytes;
+
+  const SyncFolderInfoDtoV2({
+    required this.path,
+    this.sizeBytes,
+  });
+
+  @override
+  int get hashCode => path.hashCode ^ sizeBytes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncFolderInfoDtoV2 && runtimeType == other.runtimeType && path == other.path && sizeBytes == other.sizeBytes;
 }

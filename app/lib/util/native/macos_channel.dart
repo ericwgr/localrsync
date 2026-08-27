@@ -58,6 +58,21 @@ Future<void> openFirewallSettings() async {
   await _methodChannel.invokeMethod('openFirewallSettings');
 }
 
+/// Whether "Full Disk Access" (TCC) has been granted, which lets the app access
+/// all files in the user's home directory.
+Future<bool> hasFullDiskAccessMacOs() async {
+  return await _methodChannel.invokeMethod('hasFullDiskAccess') ?? false;
+}
+
+Future<void> openFullDiskAccessSettings() async {
+  await _methodChannel.invokeMethod('openFullDiskAccessSettings');
+}
+
+/// Emitted by the native side with the current "Full Disk Access" state whenever
+/// the app becomes active again (e.g. after the user returns from System Settings).
+final _fullDiskAccessStreamController = StreamController<bool>.broadcast();
+Stream<bool> get fullDiskAccessStream => _fullDiskAccessStreamController.stream;
+
 // This happens:
 /// - on macOS when text is dropped onto the app Dock icon
 /// - on macOS when text is dropped onto the app menu bar icon
@@ -85,6 +100,9 @@ Future<void> setupMethodCallHandler() async {
         break;
       case 'showLocalSendFromMenuBar':
         await showFromTray();
+        break;
+      case 'onFullDiskAccessChanged':
+        _fullDiskAccessStreamController.add(call.arguments as bool);
         break;
     }
   });

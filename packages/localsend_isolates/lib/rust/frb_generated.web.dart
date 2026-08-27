@@ -280,10 +280,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RTCSendFileResponse dco_decode_box_autoadd_rtc_send_file_response(dynamic raw);
 
   @protected
+  SyncFolderInfoDtoV2 dco_decode_box_autoadd_sync_folder_info_dto_v_2(dynamic raw);
+
+  @protected
   TlsConfig dco_decode_box_autoadd_tls_config(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_box_autoadd_u_64(dynamic raw);
 
   @protected
   WebParams dco_decode_box_autoadd_web_params(dynamic raw);
@@ -380,10 +386,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PrepareUploadResponseDto? dco_decode_opt_box_autoadd_prepare_upload_response_dto(dynamic raw);
 
   @protected
+  SyncFolderInfoDtoV2? dco_decode_opt_box_autoadd_sync_folder_info_dto_v_2(dynamic raw);
+
+  @protected
   TlsConfig? dco_decode_opt_box_autoadd_tls_config(dynamic raw);
 
   @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
 
   @protected
   List<String>? dco_decode_opt_list_String(dynamic raw);
@@ -471,6 +483,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SessionEndReasonV2 dco_decode_session_end_reason_v_2(dynamic raw);
+
+  @protected
+  SyncFolderInfoDtoV2 dco_decode_sync_folder_info_dto_v_2(dynamic raw);
 
   @protected
   TlsConfig dco_decode_tls_config(dynamic raw);
@@ -744,10 +759,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RTCSendFileResponse sse_decode_box_autoadd_rtc_send_file_response(SseDeserializer deserializer);
 
   @protected
+  SyncFolderInfoDtoV2 sse_decode_box_autoadd_sync_folder_info_dto_v_2(SseDeserializer deserializer);
+
+  @protected
   TlsConfig sse_decode_box_autoadd_tls_config(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
   WebParams sse_decode_box_autoadd_web_params(SseDeserializer deserializer);
@@ -846,10 +867,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PrepareUploadResponseDto? sse_decode_opt_box_autoadd_prepare_upload_response_dto(SseDeserializer deserializer);
 
   @protected
+  SyncFolderInfoDtoV2? sse_decode_opt_box_autoadd_sync_folder_info_dto_v_2(SseDeserializer deserializer);
+
+  @protected
   TlsConfig? sse_decode_opt_box_autoadd_tls_config(SseDeserializer deserializer);
 
   @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
   List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
@@ -937,6 +964,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SessionEndReasonV2 sse_decode_session_end_reason_v_2(SseDeserializer deserializer);
+
+  @protected
+  SyncFolderInfoDtoV2 sse_decode_sync_folder_info_dto_v_2(SseDeserializer deserializer);
 
   @protected
   TlsConfig sse_decode_tls_config(SseDeserializer deserializer);
@@ -1255,10 +1285,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_rtc_send_file_response(RTCSendFileResponse self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_sync_folder_info_dto_v_2(SyncFolderInfoDtoV2 self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_tls_config(TlsConfig self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_web_params(WebParams self, SseSerializer serializer);
@@ -1357,10 +1393,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_prepare_upload_response_dto(PrepareUploadResponseDto? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_sync_folder_info_dto_v_2(SyncFolderInfoDtoV2? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_tls_config(TlsConfig? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
@@ -1449,6 +1491,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_session_end_reason_v_2(SessionEndReasonV2 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_folder_info_dto_v_2(SyncFolderInfoDtoV2 self, SseSerializer serializer);
 
   @protected
   void sse_encode_tls_config(TlsConfig self, SseSerializer serializer);
