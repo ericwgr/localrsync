@@ -24,6 +24,11 @@ class SyncState with SyncStateMappable {
   final bool serverRunning;
   final bool download;
 
+  /// Absolute path of the configured sync folder, or null when none is set.
+  /// The server isolate uses it to answer sync manifests and to store the
+  /// received files of a sync session.
+  final String? syncFolderPath;
+
   SyncState({
     required this.rootIsolateToken,
     required this.securityContext,
@@ -37,11 +42,12 @@ class SyncState with SyncStateMappable {
     required this.discoveryTimeout,
     required this.serverRunning,
     required this.download,
+    required this.syncFolderPath,
   });
 
   @override
   String toString() {
-    return 'SyncState(securityContext: <SecurityContext>, deviceInfo: $deviceInfo, alias: $alias, port: $port, networkWhitelist: $networkWhitelist, networkBlacklist: $networkBlacklist, protocol: $protocol, multicastGroup: $multicastGroup, discoveryTimeout: $discoveryTimeout, serverRunning: $serverRunning, download: $download)';
+    return 'SyncState(securityContext: <SecurityContext>, deviceInfo: $deviceInfo, alias: $alias, port: $port, networkWhitelist: $networkWhitelist, networkBlacklist: $networkBlacklist, protocol: $protocol, multicastGroup: $multicastGroup, discoveryTimeout: $discoveryTimeout, serverRunning: $serverRunning, download: $download, syncFolderPath: $syncFolderPath)';
   }
 }
 

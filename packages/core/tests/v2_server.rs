@@ -118,6 +118,9 @@ async fn start_test_server_with_verification(
                     ServerEventV2::PrepareUploadAborted { .. } => {}
                     ServerEventV2::CancelReceived { .. } => {}
                     ServerEventV2::ListenerFailed { .. } => {}
+                    ServerEventV2::SyncFolderInfoRequested { .. } => {}
+                    ServerEventV2::SyncManifestRequested { .. } => {}
+                    ServerEventV2::SyncCommitRequested { .. } => {}
                 }
             }
         }

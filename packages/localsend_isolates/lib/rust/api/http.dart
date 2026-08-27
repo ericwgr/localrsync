@@ -13,7 +13,8 @@ import 'package:localsend_isolates/rust/frb_generated.dart';
 part 'http.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `resolve_file_content`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `from`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `SyncCommitRequestV2`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `from`
 
 /// Creates an HTTP client.
 ///
@@ -56,11 +57,39 @@ abstract class RsHttpClient implements RustOpaqueInterface {
     required RegisterDto payload,
   });
 
+  /// Commits a sync session: asks the destination to delete the files and
+  /// directories its diff authorized, which happens after all uploads
+  /// succeeded.
+  ///
+  /// POST /api/localsend/v2/sync/commit (LocalRsync extension).
+  Future<void> syncCommit({
+    required ProtocolType protocol,
+    required String ip,
+    required int port,
+    required String sessionId,
+    required List<String> deleteRemote,
+    required List<String> deleteDirs,
+  });
+
   /// Queries the sync folder information of another device.
   ///
   /// POST /api/localsend/v2/sync-folder-info (LocalRsync extension).
   /// Returns `null` when the peer has no sync folder configured (204).
   Future<SyncFolderInfoDtoV2?> syncFolderInfo({required ProtocolType protocol, required String ip, required int port});
+
+  /// Submits a sync manifest to another device.
+  ///
+  /// POST /api/localsend/v2/sync/manifest (LocalRsync extension).
+  ///
+  /// The destination diffs its sync folder against the submitted listing
+  /// and returns the files to upload and delete.
+  Future<RsSyncManifestResult> syncManifest({
+    required ProtocolType protocol,
+    required String ip,
+    required int port,
+    required String folderId,
+    required List<SyncFileInfoV2> files,
+  });
 
   /// Uploads a single file, emitting [RsUploadEvent]s on [sink].
   ///
@@ -148,6 +177,23 @@ sealed class RsHttpClientError with _$RsHttpClientError implements FrbException 
 }
 
 @freezed
+sealed class RsSyncManifestResult with _$RsSyncManifestResult {
+  const RsSyncManifestResult._();
+
+  /// The destination computed a diff; proceed with the sync.
+  const factory RsSyncManifestResult.diff(
+    SyncDiffV2 field0,
+  ) = RsSyncManifestResult_Diff;
+
+  /// The destination refused the sync (e.g. no sync folder configured or
+  /// the sync was declined).
+  const factory RsSyncManifestResult.rejected({
+    required int status,
+    required String message,
+  }) = RsSyncManifestResult_Rejected;
+}
+
+@freezed
 sealed class RsUploadEvent with _$RsUploadEvent {
   const RsUploadEvent._();
 
@@ -160,6 +206,63 @@ sealed class RsUploadEvent with _$RsUploadEvent {
   const factory RsUploadEvent.failed({
     required RsHttpClientError error,
   }) = RsUploadEvent_Failed;
+}
+
+class SyncDiffV2 {
+  final String sessionId;
+  final List<String> needUpload;
+  final List<String> deleteRemote;
+  final List<String> deleteDirs;
+
+  const SyncDiffV2({
+    required this.sessionId,
+    required this.needUpload,
+    required this.deleteRemote,
+    required this.deleteDirs,
+  });
+
+  @override
+  int get hashCode => sessionId.hashCode ^ needUpload.hashCode ^ deleteRemote.hashCode ^ deleteDirs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncDiffV2 &&
+          runtimeType == other.runtimeType &&
+          sessionId == other.sessionId &&
+          needUpload == other.needUpload &&
+          deleteRemote == other.deleteRemote &&
+          deleteDirs == other.deleteDirs;
+}
+
+class SyncFileInfoV2 {
+  final String path;
+  final BigInt size;
+  final BigInt? mtime;
+  final String sha256;
+  final bool isDir;
+
+  const SyncFileInfoV2({
+    required this.path,
+    required this.size,
+    this.mtime,
+    required this.sha256,
+    required this.isDir,
+  });
+
+  @override
+  int get hashCode => path.hashCode ^ size.hashCode ^ mtime.hashCode ^ sha256.hashCode ^ isDir.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncFileInfoV2 &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          size == other.size &&
+          mtime == other.mtime &&
+          sha256 == other.sha256 &&
+          isDir == other.isDir;
 }
 
 class SyncFolderInfoDtoV2 {
@@ -178,4 +281,22 @@ class SyncFolderInfoDtoV2 {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SyncFolderInfoDtoV2 && runtimeType == other.runtimeType && path == other.path && sizeBytes == other.sizeBytes;
+}
+
+class SyncManifestRequestV2 {
+  final String folderId;
+  final List<SyncFileInfoV2> files;
+
+  const SyncManifestRequestV2({
+    required this.folderId,
+    required this.files,
+  });
+
+  @override
+  int get hashCode => folderId.hashCode ^ files.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncManifestRequestV2 && runtimeType == other.runtimeType && folderId == other.folderId && files == other.files;
 }

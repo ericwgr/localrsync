@@ -1,6 +1,7 @@
 use crate::http::dto_v2::{
     InfoResponseDtoV2, PrepareUploadRequestDtoV2, PrepareUploadResponseDtoV2, RegisterDtoV2,
-    RegisterResponseDtoV2, SyncFolderInfoDtoV2,
+    RegisterResponseDtoV2, SyncCommitRequestV2, SyncDiffV2, SyncFolderInfoDtoV2,
+    SyncManifestRequestV2,
 };
 use crate::http::server::common::collect_to_json::CollectToJson;
 use crate::http::server::common::error::AppError;
@@ -12,7 +13,7 @@ use crate::http::server::common::session::{
     FileStatusV2, PendingSessionV2, SessionFileV2, SessionStateV2, UploadSessionV2,
 };
 use crate::http::server::PeerIp;
-use crate::http::server::{common, AppState, RequestClientInfo, V2State};
+use crate::http::server::{common, AppState, RequestClientInfo, SyncSessionV2, V2State};
 use crate::model::discovery::PROTOCOL_VERSION_V2;
 use crate::model::transfer::FileDto;
 use hyper::body::Incoming;
@@ -147,6 +148,77 @@ pub enum ServerEventV2 {
         /// Channel to send the sync folder information to.
         response_tx: oneshot::Sender<Option<SyncFolderInfoDtoV2>>,
     },
+
+    /// A sync initiator submits its directory listing via
+    /// `POST /api/localsend/v2/sync/manifest`.
+    ///
+    /// The application must diff the listing against its own sync folder and
+    /// answer on `response_tx` — [SyncManifestDecisionV2::Apply] with the
+    /// computed diff (whose `delete_remote` then becomes committable under its
+    /// session) or [SyncManifestDecisionV2::Reject]. Dropping `response_tx`
+    /// results in a 500 response.
+    SyncManifestRequested {
+        /// The IP address of the initiator.
+        ip: PeerIp,
+
+        /// The SHA-256 fingerprint (uppercase hex) of the initiator's client
+        /// certificate. The endpoint requires a verified certificate, so this
+        /// is always `Some` for accepted requests.
+        cert_fingerprint: Option<String>,
+
+        /// The submitted manifest.
+        manifest: SyncManifestRequestV2,
+
+        /// The session that an [SyncManifestDecisionV2::Apply] must answer
+        /// with. Pre-generated so the application does not invent it; only a
+        /// diff carrying this ID is accepted.
+        session_id: String,
+
+        /// Channel to send the decision to.
+        response_tx: oneshot::Sender<SyncManifestDecisionV2>,
+    },
+
+    /// A sync initiator requests the deletion of files via
+    /// `POST /api/localsend/v2/sync/commit`.
+    ///
+    /// The submitted paths were verified to be authorized deletions of the
+    /// session (a subset of the `delete_remote`/`delete_dirs` the application
+    /// decided for the manifest). The application must delete them and answer
+    /// on `response_tx`. Dropping `response_tx` results in a 500 response and
+    /// the session stays authorized, so the initiator can retry.
+    SyncCommitRequested {
+        /// The IP address of the initiator.
+        ip: PeerIp,
+
+        /// The session ID (from [ServerEventV2::SyncManifestRequested]).
+        session_id: String,
+
+        /// The relative paths of files to delete from the sync folder, a subset of the
+        /// authorized diff. Empty commits are answered without an event.
+        delete_remote: Vec<String>,
+
+        /// The relative paths of (empty) directories to delete, also a subset
+        /// of the authorized diff.
+        delete_dirs: Vec<String>,
+
+        /// Channel to confirm the deletions were applied.
+        response_tx: oneshot::Sender<()>,
+    },
+}
+
+/// The application's decision for a sync manifest request.
+#[derive(Debug)]
+pub enum SyncManifestDecisionV2 {
+    /// The sync is authorized. The diff is returned to the initiator and its
+    /// `delete_remote` becomes committable under its session ID.
+    Apply(SyncDiffV2),
+
+    /// Reject the sync with a status code and an error message for the
+    /// initiator.
+    Reject {
+        status: StatusCode,
+        message: String,
+    },
 }
 
 /// The application's decision for a prepare-upload request.
@@ -277,6 +349,214 @@ pub(crate) async fn sync_folder_info(
         }
         Err(_) => Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR)),
     }
+}
+
+/// Handles `POST /api/localsend/v2/sync/manifest`.
+///
+/// The sync endpoints require TLS with a verified client certificate: the
+/// certificate fingerprint is the only strong device identity in the
+/// protocol, and a sync can delete files on this device. On a plain HTTP
+/// connection every peer on the network could spoof the initiator, so such
+/// requests are rejected.
+///
+/// The diff is computed by the application (it owns the sync folder and its
+/// directory scanning); the server only stores the authorized deletions under
+/// the pre-generated session so a later commit can be verified against them.
+pub(crate) async fn sync_manifest(
+    req: Request<Incoming>,
+    state: AppState,
+    client_info: RequestClientInfo,
+) -> Result<Response<BoxedBody>, AppError> {
+    let v2 = require_v2(&state)?;
+    let query = parse_query(req.uri().query());
+    check_pin(
+        v2.pin.as_deref(),
+        &v2.pin_attempts,
+        &query,
+        client_info.ip.ip,
+    )
+    .await?;
+    require_client_cert(&client_info)?;
+
+    let payload = req
+        .into_body()
+        .collect_to_json::<SyncManifestRequestV2>()
+        .await?;
+
+    for file in &payload.files {
+        if !is_safe_relative_path(&file.path) {
+            return Err(AppError::BadRequest(format!(
+                "Unsafe path in manifest: {}",
+                file.path
+            )));
+        }
+    }
+
+    let session_id = Uuid::new_v4().to_string();
+    let (response_tx, response_rx) = oneshot::channel();
+
+    let event = ServerEventV2::SyncManifestRequested {
+        ip: client_info.ip,
+        cert_fingerprint: client_info.cert_fingerprint(),
+        manifest: payload.clone(),
+        session_id: session_id.clone(),
+        response_tx,
+    };
+    if v2.event_tx.send(event).await.is_err() {
+        return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+    }
+
+    let decision = response_rx
+        .await
+        .map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    match decision {
+        SyncManifestDecisionV2::Apply(diff) => {
+            if diff.session_id != session_id {
+                return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+            }
+            // Every authorized deletion must be safe and (re)validated here,
+            // even though the manifest paths were checked above: the diff is
+            // computed by the application, so its path claims are anchored on
+            // the server side again before they become deletable.
+            let deletes: HashSet<String> = diff
+                .delete_remote
+                .iter()
+                .chain(diff.delete_dirs.iter())
+                .filter(|path| is_safe_relative_path(path))
+                .cloned()
+                .collect();
+            if deletes.len() != diff.delete_remote.len() + diff.delete_dirs.len() {
+                return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+            }
+
+            v2.sync_sessions.lock().await.insert(
+                session_id.clone(),
+                SyncSessionV2 {
+                    sender_ip: client_info.ip,
+                    authorized_deletes: deletes,
+                },
+            );
+
+            Ok(JsonResponse {
+                status: StatusCode::OK,
+                body: diff,
+            }
+            .into_response())
+        }
+        SyncManifestDecisionV2::Reject { status, message } => {
+            Err(AppError::Message(status, message))
+        }
+    }
+}
+
+/// Handles `POST /api/localsend/v2/sync/commit`.
+///
+/// Deletes the files the application authorized in the manifest decision.
+/// The commit is the last step of a sync; the session is revoked once it
+/// succeeded, so it cannot be reused.
+pub(crate) async fn sync_commit(
+    req: Request<Incoming>,
+    state: AppState,
+    client_info: RequestClientInfo,
+) -> Result<Response<BoxedBody>, AppError> {
+    let v2 = require_v2(&state)?;
+    let query = parse_query(req.uri().query());
+    check_pin(
+        v2.pin.as_deref(),
+        &v2.pin_attempts,
+        &query,
+        client_info.ip.ip,
+    )
+    .await?;
+    require_client_cert(&client_info)?;
+
+    let payload = req
+        .into_body()
+        .collect_to_json::<SyncCommitRequestV2>()
+        .await?;
+
+    // Verify the deletion request against the authorized session without
+    // consuming it yet: on failure the session stays, so the initiator can
+    // retry the commit.
+    {
+        let sessions = v2.sync_sessions.lock().await;
+        let Some(session) = sessions.get(&payload.session_id) else {
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "Unknown sync session".to_string(),
+            ));
+        };
+        if session.sender_ip != client_info.ip {
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "Sync session of another device".to_string(),
+            ));
+        }
+        if !payload.delete_remote.iter().all(|path| {
+            is_safe_relative_path(path) && session.authorized_deletes.contains(path)
+        }) || !payload.delete_dirs.iter().all(|path| {
+            is_safe_relative_path(path) && session.authorized_deletes.contains(path)
+        }) {
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "Unauthorized deletion".to_string(),
+            ));
+        }
+    }
+
+    if payload.delete_remote.is_empty() && payload.delete_dirs.is_empty() {
+        // Nothing to delete; the session is done.
+        v2.sync_sessions.lock().await.remove(&payload.session_id);
+        return Ok(Response::new(empty_body()));
+    }
+
+    let (response_tx, response_rx) = oneshot::channel();
+    let event = ServerEventV2::SyncCommitRequested {
+        ip: client_info.ip,
+        session_id: payload.session_id.clone(),
+        delete_remote: payload.delete_remote,
+        delete_dirs: payload.delete_dirs,
+        response_tx,
+    };
+    if v2.event_tx.send(event).await.is_err() {
+        return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+    }
+
+    // Only consume the session after the deletions were applied.
+    if response_rx.await.is_ok() {
+        v2.sync_sessions.lock().await.remove(&payload.session_id);
+    } else {
+        return Err(AppError::Status(StatusCode::INTERNAL_SERVER_ERROR));
+    }
+
+    tracing::info!("Sync session committed: {}", payload.session_id);
+    Ok(Response::new(empty_body()))
+}
+
+/// The sync endpoints require a verified client certificate (i.e. a TLS
+/// connection); see [sync_manifest] for why.
+fn require_client_cert(client_info: &RequestClientInfo) -> Result<(), AppError> {
+    if client_info.cert_fingerprint().is_some() {
+        Ok(())
+    } else {
+        Err(AppError::Message(
+            StatusCode::FORBIDDEN,
+            "Sync requires a TLS connection with a client certificate".to_string(),
+        ))
+    }
+}
+
+/// Whether a manifest/commit path is safe to store or delete within the sync
+/// folder: not absolute, no `..` segments, no empty segments (no trailing
+/// slash), no Windows-style separators.
+fn is_safe_relative_path(path: &str) -> bool {
+    !path.starts_with('/')
+        && !path.contains('\\')
+        && path != "."
+        && path
+            .split('/')
+            .all(|segment| !segment.is_empty() && segment != "..")
 }
 
 pub(crate) async fn prepare_upload(
@@ -434,20 +714,82 @@ pub(crate) async fn upload(
         ));
     };
 
-    // Validate the request and mark the file as in progress.
+    // Validate the request and mark the file as in progress. The response
+    // message names the exact guard that failed, so a failing sync shows
+    // which one it is instead of a generic "Invalid token or IP address".
     let file_dto = {
         let mut slot = v2.session.lock().await;
         let Some(SessionStateV2::Active(session)) = slot.as_mut() else {
-            return Err(invalid_token_error());
+            match &*slot {
+                Some(SessionStateV2::Pending(pending)) => {
+                    // The prepare-upload for this session was answered with a
+                    // decision, but the upload still arrived while the session
+                    // is pending (waiting for the application's decision).
+                    tracing::warn!(
+                        "Upload rejected: session {} is still pending (waiting for the decision); active session would be {}",
+                        session_id,
+                        pending.session_id
+                    );
+                    return Err(AppError::Message(
+                        StatusCode::FORBIDDEN,
+                        "The upload session is still waiting for the decision".to_string(),
+                    ));
+                }
+                None => {
+                    tracing::warn!("Upload rejected: no active upload session (requested {session_id})");
+                    return Err(AppError::Message(
+                        StatusCode::FORBIDDEN,
+                        "No active upload session".to_string(),
+                    ));
+                }
+                // The else branch of the let-else above, unreachable here.
+                Some(SessionStateV2::Active(_)) => unreachable!(),
+            }
         };
-        if session.session_id != *session_id || session.sender_ip != client_info.ip {
-            return Err(invalid_token_error());
+        if session.session_id != *session_id {
+            tracing::warn!(
+                "Upload rejected: session {} does not match the active session {}",
+                session_id,
+                session.session_id
+            );
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "Upload session mismatch".to_string(),
+            ));
+        }
+        if session.sender_ip != client_info.ip {
+            tracing::warn!(
+                "Upload rejected: sender {} does not match the session's sender {}",
+                client_info.ip,
+                session.sender_ip
+            );
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "The upload comes from a different IP address than the prepare-upload".to_string(),
+            ));
         }
         let Some(file) = session.files.get_mut(file_id) else {
-            return Err(invalid_token_error());
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "File is not part of this session".to_string(),
+            ));
         };
-        if file.token != *token || file.status != FileStatusV2::Pending {
-            return Err(invalid_token_error());
+        if file.token != *token {
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "Invalid file token".to_string(),
+            ));
+        }
+        if file.status != FileStatusV2::Pending {
+            tracing::warn!(
+                "Upload rejected: file {} is {:?}, not Pending (a previous attempt may have failed)",
+                file_id,
+                file.status
+            );
+            return Err(AppError::Message(
+                StatusCode::FORBIDDEN,
+                "The file is still in progress or marked as failed: a previous attempt left it in this state".to_string(),
+            ));
         }
         file.status = FileStatusV2::InProgress;
         file.attempts = file.attempts.saturating_add(1);
@@ -588,13 +930,6 @@ fn require_v2(state: &AppState) -> Result<Arc<V2State>, AppError> {
         .v2
         .clone()
         .ok_or(AppError::Status(StatusCode::NOT_FOUND))
-}
-
-fn invalid_token_error() -> AppError {
-    AppError::Message(
-        StatusCode::FORBIDDEN,
-        "Invalid token or IP address".to_string(),
-    )
 }
 
 /// Frees a claimed `Pending` session slot unless a session was created.

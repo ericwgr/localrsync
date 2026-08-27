@@ -13,12 +13,28 @@ export 'package:localsend_isolates/src/isolate/child/server_isolate.dart'
         HttpServerSessionEndEvent,
         HttpServerShowEvent,
         HttpServerStartedEvent,
+        HttpServerSyncCommitEvent,
         HttpServerSyncFolderInfoRequestedEvent,
+        HttpServerSyncManifestEvent,
+        HttpServerSyncManifestRejectedEvent,
+        HttpServerSyncScanProgressEvent,
+        HttpServerSyncScanStartedEvent,
         HttpServerWebFileDownloadEvent,
         HttpServerWebPrepareDownloadEvent;
 export 'package:localsend_isolates/src/isolate/child/sync_provider.dart';
 export 'package:localsend_isolates/src/isolate/child/upload_isolate.dart'
     show
+        HttpSyncCommittedEvent,
+        HttpSyncDiffEvent,
+        HttpSyncEvent,
+        HttpSyncFailedEvent,
+        HttpSyncFileFinishedEvent,
+        HttpSyncFileProgressEvent,
+        HttpSyncFileStartedEvent,
+        HttpSyncFinishedEvent,
+        HttpSyncPushTask,
+        HttpSyncScanProgressEvent,
+        HttpSyncScanStartedEvent,
         HttpUploadEvent,
         HttpUploadFile,
         HttpUploadFileFailedEvent,

@@ -191,6 +191,54 @@ impl LsHttpClient {
             ))),
         }
     }
+
+    /// Submits a sync manifest to another device (see
+    /// [LsHttpClientV2::sync_manifest]).
+    ///
+    /// This is a LocalRsync extension; the v3 protocol has no equivalent, so a
+    /// v3 client answers with an error.
+    pub async fn sync_manifest(
+        &self,
+        protocol: model::discovery::ProtocolType,
+        ip: &str,
+        port: u16,
+        folder_id: &str,
+        files: Vec<http::dto_v2::SyncFileInfoV2>,
+    ) -> Result<http::dto_v2::SyncManifestResultV2, ClientError> {
+        match self {
+            LsHttpClient::V2(client) => {
+                client.sync_manifest(protocol, ip, port, folder_id, files).await
+            }
+            LsHttpClient::V3(_) => Err(ClientError::Other(anyhow::anyhow!(
+                "sync-manifest is not supported by the v3 protocol"
+            ))),
+        }
+    }
+
+    /// Commits a sync session (see [LsHttpClientV2::sync_commit]).
+    ///
+    /// This is a LocalRsync extension; the v3 protocol has no equivalent, so a
+    /// v3 client answers with an error.
+    pub async fn sync_commit(
+        &self,
+        protocol: model::discovery::ProtocolType,
+        ip: &str,
+        port: u16,
+        session_id: &str,
+        delete_remote: Vec<String>,
+        delete_dirs: Vec<String>,
+    ) -> Result<(), ClientError> {
+        match self {
+            LsHttpClient::V2(client) => {
+                client
+                    .sync_commit(protocol, ip, port, session_id, delete_remote, delete_dirs)
+                    .await
+            }
+            LsHttpClient::V3(_) => Err(ClientError::Other(anyhow::anyhow!(
+                "sync-commit is not supported by the v3 protocol"
+            ))),
+        }
+    }
 }
 
 /// Builds a streaming request body from the file content, invoking `progress`

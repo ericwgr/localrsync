@@ -297,6 +297,59 @@ class IsolateHttpUploadCancelAction extends ReduxAction<IsolateController, Paren
   }
 }
 
+/// The result of an [IsolateHttpSyncPushAction].
+class IsolateHttpSyncPushResult {
+  final int taskId;
+  final Stream<HttpSyncEvent> events;
+
+  IsolateHttpSyncPushResult({
+    required this.taskId,
+    required this.events,
+  });
+}
+
+/// Pushes the folder at [local] to the sync folder of [device] (LocalRsync
+/// extension): scan → manifest → parallel uploads → commit, all in the
+/// upload isolate. The stream of [HttpSyncEvent]s completes when the push
+/// finished or failed; [HttpSyncFailedEvent] reports the failing phase.
+class IsolateHttpSyncPushAction extends ReduxActionWithResult<IsolateController, ParentIsolateState, IsolateHttpSyncPushResult> {
+  /// Absolute path of the folder to mirror.
+  final String localPath;
+
+  /// The destination device.
+  final Device device;
+
+  IsolateHttpSyncPushAction({
+    required this.localPath,
+    required this.device,
+  });
+
+  @override
+  (ParentIsolateState, IsolateHttpSyncPushResult) reduce() {
+    final connection = state.httpUpload;
+    if (connection == null) {
+      throw StateError('httpUpload is not initialized');
+    }
+
+    final taskId = IdProvider.instance.getNextId();
+    final events = connection.sendWrappedTaskAndListenStream(
+      task: HttpSyncPushTask(
+        local: localPath,
+        device: device,
+      ),
+      taskId: taskId,
+    );
+
+    return (
+      state,
+      IsolateHttpSyncPushResult(
+        taskId: taskId,
+        events: events.cast<HttpSyncEvent>(),
+      ),
+    );
+  }
+}
+
 /// Starts the HTTP server and returns the stream of server events.
 /// The stream ends when the server is stopped via [IsolateHttpServerStopAction].
 class IsolateHttpServerStartAction extends ReduxActionWithResult<IsolateController, ParentIsolateState, Stream<HttpServerEvent>> {

@@ -1,12 +1,14 @@
 use crate::frb_generated::StreamSink;
 use flutter_rust_bridge::frb;
-pub use localsend::http::dto_v2::{RegisterDtoV2, SyncFolderInfoDtoV2};
+pub use localsend::http::dto_v2::{
+    RegisterDtoV2, SyncDiffV2, SyncFileInfoV2, SyncFolderInfoDtoV2, SyncManifestRequestV2,
+};
 use localsend::http::server::ServerConfigV2;
 pub use localsend::http::server::TlsConfig;
 use localsend::http::server::common::save::FileUploadTarget;
 use localsend::http::server::internal::{InternalConfig, InternalEvent};
 pub use localsend::http::server::v2::SessionEndReasonV2;
-use localsend::http::server::v2::{PrepareUploadDecisionV2, ServerEventV2};
+use localsend::http::server::v2::{PrepareUploadDecisionV2, ServerEventV2, SyncManifestDecisionV2};
 use localsend::http::server::web::{
     WebConfig, WebMode as CoreWebMode, WebDownloadConfig, WebDownloadEvent,
 };
@@ -120,6 +122,53 @@ pub enum RsServerEvent {
         /// server runs without TLS.
         cert_fingerprint: Option<String>,
     },
+
+    /// A sync initiator submits its directory listing via
+    /// `POST /api/localsend/v2/sync/manifest`.
+    ///
+    /// Must be answered with [RsHttpServer::respond_sync_manifest]. The
+    /// application diffs the listing against its own sync folder and answers
+    /// with the computed diff (whose `delete_remote` becomes committable
+    /// under [session_id]) or a rejection.
+    SyncManifestRequested {
+        /// The IP address of the initiator.
+        ip: String,
+        /// The SHA-256 fingerprint (uppercase hex) of the initiator's client
+        /// certificate verified during the mTLS handshake. Always `Some`:
+        /// the endpoint requires a verified certificate.
+        cert_fingerprint: Option<String>,
+        /// The submitted directory listing.
+        manifest: SyncManifestRequestV2,
+        /// The session that an accepted decision must carry.
+        session_id: String,
+    },
+
+    /// A sync initiator requests the deletion of files via
+    /// `POST /api/localsend/v2/sync/commit`.
+    ///
+    /// The paths are authorized deletions of the session; the application
+    /// must delete them and answer with [RsHttpServer::respond_sync_commit].
+    SyncCommitRequested {
+        /// The IP address of the initiator.
+        ip: String,
+        /// The session of the manifest that authorized the deletions.
+        session_id: String,
+        /// The relative paths of files to delete from the sync folder.
+        delete_remote: Vec<String>,
+        /// The relative paths of (empty) directories to delete.
+        delete_dirs: Vec<String>,
+    },
+}
+
+/// The application's decision for a sync manifest request.
+pub enum RsSyncManifestDecision {
+    /// Accept the sync with the computed diff. The diff's `delete_remote`
+    /// then becomes committable under the session the server generated.
+    Apply(SyncDiffV2),
+
+    /// Reject the sync with a status code and an error message for the
+    /// initiator.
+    Reject { status: u16, message: String },
 }
 
 pub struct RsHttpServer {
@@ -131,6 +180,8 @@ pub struct RsHttpServer {
     pending_download_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_downloads: Mutex<HashMap<(String, String), oneshot::Sender<FileContent>>>,
     pending_sync_folder_info: Mutex<Option<oneshot::Sender<Option<SyncFolderInfoDtoV2>>>>,
+    pending_sync_manifests: Mutex<HashMap<String, oneshot::Sender<SyncManifestDecisionV2>>>,
+    pending_sync_commits: Mutex<HashMap<String, oneshot::Sender<()>>>,
     internal_event_rx: Mutex<Option<mpsc::Receiver<InternalEvent>>>,
 }
 
@@ -303,6 +354,8 @@ pub async fn start_server(
         pending_download_decisions: Mutex::new(HashMap::new()),
         pending_downloads: Mutex::new(HashMap::new()),
         pending_sync_folder_info: Mutex::new(None),
+        pending_sync_manifests: Mutex::new(HashMap::new()),
+        pending_sync_commits: Mutex::new(HashMap::new()),
         internal_event_rx: Mutex::new(internal_event_rx),
     })
 }
@@ -457,6 +510,44 @@ impl RsHttpServer {
                 sink.add(RsServerEvent::SyncFolderInfoRequested {
                     ip: ip.to_string(),
                     cert_fingerprint,
+                })
+                .is_ok()
+            }
+            ServerEventV2::SyncManifestRequested {
+                ip,
+                cert_fingerprint,
+                manifest,
+                session_id,
+                response_tx,
+            } => {
+                self.pending_sync_manifests
+                    .lock()
+                    .await
+                    .insert(session_id.clone(), response_tx);
+                sink.add(RsServerEvent::SyncManifestRequested {
+                    ip: ip.to_string(),
+                    cert_fingerprint,
+                    manifest,
+                    session_id,
+                })
+                .is_ok()
+            }
+            ServerEventV2::SyncCommitRequested {
+                ip,
+                session_id,
+                delete_remote,
+                delete_dirs,
+                response_tx,
+            } => {
+                self.pending_sync_commits
+                    .lock()
+                    .await
+                    .insert(session_id.clone(), response_tx);
+                sink.add(RsServerEvent::SyncCommitRequested {
+                    ip: ip.to_string(),
+                    session_id,
+                    delete_remote,
+                    delete_dirs,
                 })
                 .is_ok()
             }
@@ -700,6 +791,62 @@ impl RsHttpServer {
         response_tx
             .send(info)
             .map_err(|_| anyhow::anyhow!("Sync-folder-info request already ended"))?;
+
+        Ok(())
+    }
+
+    /// Answers the pending [RsServerEvent::SyncManifestRequested] event.
+    ///
+    /// Passing [RsSyncManifestDecision::Apply] accepts the sync; the diff is
+    /// returned to the initiator and its `delete_remote` becomes committable
+    /// under the session. Passing [RsSyncManifestDecision::Reject] refuses
+    /// the sync with the given status and message.
+    pub async fn respond_sync_manifest(
+        &self,
+        session_id: String,
+        decision: RsSyncManifestDecision,
+    ) -> anyhow::Result<()> {
+        let Some(response_tx) = self.pending_sync_manifests.lock().await.remove(&session_id) else {
+            return Err(anyhow::anyhow!("No pending sync-manifest request"));
+        };
+
+        let decision = match decision {
+            RsSyncManifestDecision::Apply(diff) => SyncManifestDecisionV2::Apply(diff),
+            RsSyncManifestDecision::Reject { status, message } => {
+                let status = localsend::reqwest::StatusCode::from_u16(status)
+                    .map_err(|_| anyhow::anyhow!("Invalid status code {status}"))?;
+                SyncManifestDecisionV2::Reject { status, message }
+            }
+        };
+
+        response_tx
+            .send(decision)
+            .map_err(|_| anyhow::anyhow!("Sync-manifest request already ended"))?;
+
+        Ok(())
+    }
+
+    /// Answers the pending [RsServerEvent::SyncCommitRequested] event.
+    ///
+    /// Passing `true` confirms the deletions were applied; the session is
+    /// then revoked by the server. Passing `false` fails the commit with an
+    /// error response and the session stays authorized, so the initiator can
+    /// retry.
+    pub async fn respond_sync_commit(
+        &self,
+        session_id: String,
+        success: bool,
+    ) -> anyhow::Result<()> {
+        let Some(response_tx) = self.pending_sync_commits.lock().await.remove(&session_id) else {
+            return Err(anyhow::anyhow!("No pending sync-commit request"));
+        };
+
+        if success {
+            response_tx
+                .send(())
+                .map_err(|_| anyhow::anyhow!("Sync-commit request already ended"))?;
+        }
+        // Dropping the responder fails the request; the session stays.
 
         Ok(())
     }

@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/model/dto/multicast_dto.dart';
 import 'package:localsend_isolates/model/file_type.dart';
-import 'package:localsend_isolates/rust/api/http.dart' show SyncFolderInfoDtoV2;
+import 'package:localsend_isolates/rust/api/cancel.dart';
+import 'package:localsend_isolates/rust/api/http.dart' show SyncDiffV2, SyncFolderInfoDtoV2, SyncManifestRequestV2;
 import 'package:localsend_isolates/rust/api/model.dart' show FileDto;
 import 'package:localsend_isolates/rust/api/server.dart';
 import 'package:localsend_isolates/src/isolate/child/main.dart';
@@ -12,6 +13,8 @@ import 'package:localsend_isolates/src/isolate/child/sync_provider.dart';
 import 'package:localsend_isolates/src/isolate/dto/send_to_isolate_data.dart';
 import 'package:localsend_isolates/src/task/server/file_saver.dart';
 import 'package:localsend_isolates/src/task/server/http_server.dart';
+import 'package:localsend_isolates/src/task/sync/sync_diff.dart';
+import 'package:localsend_isolates/src/task/sync/sync_scanner.dart';
 import 'package:localsend_isolates/util/future_queue.dart';
 import 'package:localsend_isolates/util/rust.dart';
 import 'package:logging/logging.dart';
@@ -78,6 +81,12 @@ class HttpServerReceiveConfig {
   /// for destinations that cannot be written directly.
   final int? androidSdkInt;
 
+  /// When true, the [fileNameMap] values are relative paths inside
+  /// [destinationDirectory] that must be written to exactly that location:
+  /// parent directories are created and no de-duplication renaming, gallery
+  /// or SAF handling is applied. Used for sync sessions.
+  final bool syncToFolder;
+
   HttpServerReceiveConfig({
     required this.sessionId,
     required this.fileNameMap,
@@ -85,6 +94,7 @@ class HttpServerReceiveConfig {
     required this.cacheDirectory,
     required this.saveToGallery,
     required this.androidSdkInt,
+    this.syncToFolder = false,
   });
 }
 
@@ -327,6 +337,83 @@ class HttpServerSyncFolderInfoRequestedEvent extends HttpServerEvent {
   });
 }
 
+/// The sync engine started scanning the local sync folder to answer a
+/// manifest request. Followed by [HttpServerSyncScanProgressEvent]s and
+/// eventually a [HttpServerSyncManifestEvent] (or
+/// [HttpServerSyncManifestRejectedEvent]).
+class HttpServerSyncScanStartedEvent extends HttpServerEvent {
+  /// The absolute path of the sync folder being scanned.
+  final String folderPath;
+
+  HttpServerSyncScanStartedEvent({required this.folderPath});
+}
+
+/// Progress of a sync folder scan: [processed] of [total] files have been
+/// hashed. A first event with `processed == 0` reports the total.
+class HttpServerSyncScanProgressEvent extends HttpServerEvent {
+  final int processed;
+  final int total;
+
+  HttpServerSyncScanProgressEvent({
+    required this.processed,
+    required this.total,
+  });
+}
+
+/// A sync manifest was answered: the initiator will upload [uploadCount]
+/// files and delete [deleteCount] files on this device to mirror the folder.
+class HttpServerSyncManifestEvent extends HttpServerEvent {
+  /// The IP address of the initiator (display only; session binding is done
+  /// by the Rust server).
+  final String ip;
+
+  final String folderPath;
+  final int uploadCount;
+  final int deleteCount;
+
+  HttpServerSyncManifestEvent({
+    required this.ip,
+    required this.folderPath,
+    required this.uploadCount,
+    required this.deleteCount,
+  });
+}
+
+/// A sync manifest was rejected with HTTP [status]/[message], e.g. because
+/// no sync folder is configured on this device.
+class HttpServerSyncManifestRejectedEvent extends HttpServerEvent {
+  final int status;
+  final String message;
+
+  HttpServerSyncManifestRejectedEvent({
+    required this.status,
+    required this.message,
+  });
+}
+
+/// The uploads of a sync session finished and the commit was applied:
+/// the sync folder now mirrors the initiator. Emitted on success and on
+/// failure of the deletion step.
+class HttpServerSyncCommitEvent extends HttpServerEvent {
+  /// The absolute path of the mirrored sync folder.
+  final String folderPath;
+
+  /// Number of files deleted on this device, 0 when [success] is false.
+  final int deletedCount;
+
+  final bool success;
+
+  /// Why the commit failed, `null` on success.
+  final String? error;
+
+  HttpServerSyncCommitEvent({
+    required this.folderPath,
+    required this.deletedCount,
+    required this.success,
+    required this.error,
+  });
+}
+
 /// A web client requests to download the shared files.
 /// Must be answered with a [HttpServerPrepareDownloadDecisionTask].
 class HttpServerWebPrepareDownloadEvent extends HttpServerEvent {
@@ -407,6 +494,31 @@ class _ReceiveSessionHolder {
   _ReceiveSession? session;
 }
 
+/// A sync session this device serves: another device diffs its folder
+/// against ours, uploads the difference and commits.
+class _SyncSession {
+  /// Absolute path of the sync folder that receives the files.
+  final String folderPath;
+
+  /// The relative paths the initiator may upload: its diff's need-upload
+  /// list, computed when the manifest was applied.
+  final Set<String> allowedPaths;
+
+  _SyncSession({
+    required this.folderPath,
+    required this.allowedPaths,
+  });
+}
+
+/// Pending sync sessions by the manifest session ID issued by the Rust
+/// server. Entries are removed when the commit was applied.
+final _syncSessionsProvider = Provider((ref) => <String, _SyncSession>{});
+
+/// Maps the client certificate fingerprint of an initiator to its latest
+/// manifest session ID, so its uploads (which use a different, per-transfer
+/// session ID) can be recognized and checked against [allowedPaths].
+final _syncSessionByFingerprintProvider = Provider((ref) => <String, String>{});
+
 Future<void> setupHttpServerIsolate(
   Stream<SendToIsolateData<IsolateTask<BaseHttpServerTask>>> receiveFromMain,
   void Function(IsolateTaskStreamResult<HttpServerEvent>) sendToMain,
@@ -485,6 +597,17 @@ Future<void> setupHttpServerIsolate(
                 case RsServerEvent_Register(:final ip, :final info):
                   emit(HttpServerRegisterEvent(ip: ip, info: info));
                 case RsServerEvent_PrepareUpload(:final sessionId, :final ip, :final info, :final certFingerprint, :final files):
+                  if (await _handleSyncPrepareUpload(
+                    ref: ref,
+                    holder: holder,
+                    sessionId: sessionId,
+                    certFingerprint: certFingerprint,
+                    files: files,
+                  )) {
+                    // Sync uploads are accepted by the engine itself, because
+                    // they need exact-path targets inside the sync folder.
+                    break;
+                  }
                   // The Rust server is the authority on the single-session
                   // invariant: a new request means the old session is over.
                   holder.session = null;
@@ -514,7 +637,18 @@ Future<void> setupHttpServerIsolate(
                     () => FutureQueue(onError: (e, st) => _logger.severe('Unexpected error while receiving file $fileId', e, st)),
                   );
                   queue.add(() async {
-                    emit(
+                    // Sync uploads are handled entirely in this isolate.
+                    // Do not expose them as ordinary receive events: the
+                    // main-isolate ReceiveController has no regular receive
+                    // session for a sync and would cancel the Rust upload
+                    // session as soon as it sees the first file.
+                    void eventEmit(HttpServerEvent event) {
+                      if (!session.config.syncToFolder) {
+                        emit(event);
+                      }
+                    }
+
+                    eventEmit(
                       HttpServerFileUploadEvent(
                         sessionId: sessionId,
                         fileId: fileId,
@@ -528,7 +662,7 @@ Future<void> setupHttpServerIsolate(
                       sessionId: sessionId,
                       fileId: fileId,
                       file: file,
-                      emit: emit,
+                      emit: eventEmit,
                     );
                   });
                 case RsServerEvent_SessionEnd(:final sessionId, :final reason):
@@ -582,10 +716,29 @@ Future<void> setupHttpServerIsolate(
                       certFingerprint: certFingerprint,
                     ),
                   );
+                case RsServerEvent_SyncManifestRequested(:final ip, :final certFingerprint, :final manifest, :final sessionId):
+                  await _handleSyncManifest(
+                    ref: ref,
+                    ip: ip,
+                    certFingerprint: certFingerprint,
+                    manifest: manifest,
+                    sessionId: sessionId,
+                    emit: emit,
+                  );
+                case RsServerEvent_SyncCommitRequested(:final sessionId, :final deleteRemote, :final deleteDirs):
+                  await _handleSyncCommit(
+                    ref: ref,
+                    sessionId: sessionId,
+                    deleteRemote: deleteRemote,
+                    deleteDirs: deleteDirs,
+                    emit: emit,
+                  );
               }
             }
           } finally {
             ref.read(_receiveSessionProvider).session = null;
+            ref.read(_syncSessionsProvider).clear();
+            ref.read(_syncSessionByFingerprintProvider).clear();
             sendToMain(
               IsolateTaskStreamResult.done(
                 id: task.id,
@@ -689,7 +842,12 @@ Future<void> _handleFileUpload({
     // A previous attempt at this file already picked a destination, which this
     // attempt overwrites instead of creating a numbered version.
     final previous = session.targets[fileId];
-    target = previous != null
+    target = config.syncToFolder
+        ? await prepareSyncFileSaveTarget(
+            syncFolderPath: config.destinationDirectory,
+            relativePath: desiredName,
+          )
+        : previous != null
         ? await reopenFileSaveTarget(previous)
         : await prepareFileSaveTarget(
             destinationDirectory: config.destinationDirectory,
@@ -772,5 +930,181 @@ Future<void> _handleFileUpload({
   } catch (e, st) {
     _logger.severe('Failed to post-process file', e, st);
     emitFailed(e);
+  }
+}
+
+/// Answers a sync manifest: scans the configured sync folder (hashing every
+/// file), diffs it against the submitted listing and answers with the diff.
+/// The session is registered so that the subsequent uploads are recognized
+/// and accepted, and the commit can delete the authorized files.
+Future<void> _handleSyncManifest({
+  required Ref ref,
+  required String ip,
+  required String? certFingerprint,
+  required SyncManifestRequestV2 manifest,
+  required String sessionId,
+  required void Function(HttpServerEvent) emit,
+}) async {
+  final syncFolderPath = ref.read(syncProvider).syncFolderPath;
+  if (syncFolderPath == null) {
+    _logger.info('Rejecting sync manifest from $ip: no sync folder configured');
+    emit(HttpServerSyncManifestRejectedEvent(status: 403, message: 'No sync folder configured'));
+    await ref
+        .read(httpServerProvider)
+        .respondSyncManifest(
+          sessionId: sessionId,
+          decision: RsSyncManifestDecision.reject(status: 403, message: 'No sync folder configured'),
+        );
+    return;
+  }
+
+  _logger.info('Scanning sync folder for $ip');
+  emit(HttpServerSyncScanStartedEvent(folderPath: syncFolderPath));
+  final entries = await scanSyncFolder(
+    rootPath: syncFolderPath,
+    cancelToken: createCancellationToken(),
+    onProgress: (processed, total) {
+      emit(HttpServerSyncScanProgressEvent(processed: processed, total: total));
+    },
+  );
+
+  final diff = computeSyncDiff(remote: manifest.files, local: entries);
+  // Register the session: its uploads are accepted against [allowedPaths]
+  // and its commit is authorized to delete the files the diff computed.
+  ref.read(_syncSessionsProvider)[sessionId] = _SyncSession(
+    folderPath: syncFolderPath,
+    allowedPaths: diff.needUpload.toSet(),
+  );
+  if (certFingerprint != null) {
+    ref.read(_syncSessionByFingerprintProvider)[certFingerprint] = sessionId;
+  }
+
+  _logger.info(
+    'Sync manifest from $ip: ${diff.needUpload.length} uploads, ${diff.deleteRemote.length} file deletions, ${diff.deleteDirs.length} directory deletions',
+  );
+  await ref
+      .read(httpServerProvider)
+      .respondSyncManifest(
+        sessionId: sessionId,
+        decision: RsSyncManifestDecision.apply(
+          // The server rejects a decision whose session does not match its own.
+          SyncDiffV2(
+            sessionId: sessionId,
+            needUpload: diff.needUpload,
+            deleteRemote: diff.deleteRemote,
+            deleteDirs: diff.deleteDirs,
+          ),
+        ),
+      );
+  emit(
+    HttpServerSyncManifestEvent(
+      ip: ip,
+      folderPath: syncFolderPath,
+      uploadCount: diff.needUpload.length,
+      deleteCount: diff.deleteRemote.length + diff.deleteDirs.length,
+    ),
+  );
+}
+
+/// Recognizes an upload request that belongs to a sync session (matched by
+/// the initiator's certificate fingerprint, which the manifest established),
+/// accepts exactly the files the diff authorized and stores the receive
+/// session that writes them to their exact relative paths.
+///
+/// Returns `false` when the request is not a sync upload, so the regular
+/// flow handles it.
+Future<bool> _handleSyncPrepareUpload({
+  required Ref ref,
+  required _ReceiveSessionHolder holder,
+  required String sessionId,
+  required String? certFingerprint,
+  required Map<String, FileDto> files,
+}) async {
+  if (certFingerprint == null) {
+    return false;
+  }
+  final syncSessionId = ref.read(_syncSessionByFingerprintProvider)[certFingerprint];
+  if (syncSessionId == null) {
+    return false;
+  }
+  final syncSession = ref.read(_syncSessionsProvider)[syncSessionId];
+  if (syncSession == null) {
+    return false;
+  }
+
+  final accepted = <String, String>{};
+  for (final entry in files.entries) {
+    // The file name is the relative path inside the sync folder; only the
+    // files of the accepted diff may be uploaded.
+    final relativePath = entry.value.fileName;
+    if (syncSession.allowedPaths.contains(relativePath)) {
+      accepted[entry.key] = relativePath;
+    }
+  }
+
+  holder.session = accepted.isEmpty
+      ? null
+      : _ReceiveSession(
+          HttpServerReceiveConfig(
+            sessionId: sessionId,
+            fileNameMap: accepted,
+            destinationDirectory: syncSession.folderPath,
+            cacheDirectory: '',
+            saveToGallery: false,
+            androidSdkInt: null,
+            syncToFolder: true,
+          ),
+        );
+  await ref.read(httpServerProvider).respondPrepareUpload(acceptedFileIds: accepted.keys.toList());
+  return true;
+}
+
+/// Applies the deletions a sync commit authorized: deletes the files, then
+/// the empty directories, from the sync folder, answers the commit and
+/// forgets the session. On failure the session is kept so the initiator can
+/// retry.
+Future<void> _handleSyncCommit({
+  required Ref ref,
+  required String sessionId,
+  required List<String> deleteRemote,
+  required List<String> deleteDirs,
+  required void Function(HttpServerEvent) emit,
+}) async {
+  final syncSession = ref.read(_syncSessionsProvider)[sessionId];
+  if (syncSession == null) {
+    _logger.warning('Sync commit for unknown session $sessionId');
+    await ref.read(httpServerProvider).respondSyncCommit(sessionId: sessionId, success: false);
+    return;
+  }
+
+  try {
+    final deleted = await deleteSyncFiles(
+      syncFolderPath: syncSession.folderPath,
+      relativePaths: deleteRemote,
+      deleteDirs: deleteDirs,
+    );
+    ref.read(_syncSessionsProvider).remove(sessionId);
+    await ref.read(httpServerProvider).respondSyncCommit(sessionId: sessionId, success: true);
+    _logger.info('Sync commit applied: deleted $deleted entries from ${syncSession.folderPath}');
+    emit(
+      HttpServerSyncCommitEvent(
+        folderPath: syncSession.folderPath,
+        deletedCount: deleted,
+        success: true,
+        error: null,
+      ),
+    );
+  } catch (e) {
+    _logger.warning('Sync commit failed: $e');
+    // Keep the session so the initiator can retry the commit.
+    await ref.read(httpServerProvider).respondSyncCommit(sessionId: sessionId, success: false);
+    emit(
+      HttpServerSyncCommitEvent(
+        folderPath: syncSession.folderPath,
+        deletedCount: 0,
+        success: false,
+        error: e.humanErrorMessage,
+      ),
+    );
   }
 }

@@ -109,6 +109,27 @@ class IsolateSyncServerStateAction extends ReduxAction<IsolateController, Parent
   }
 }
 
+/// Publishes the configured sync folder path to all child isolates, so the
+/// server isolate can answer sync manifests and store received sync files.
+class IsolateSyncFolderStateAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  /// Absolute path of the configured sync folder, or null when none is set.
+  final String? syncFolderPath;
+
+  IsolateSyncFolderStateAction({required this.syncFolderPath});
+
+  @override
+  ParentIsolateState reduce() {
+    dispatch(
+      _PublishSyncStateAction(
+        syncState: state.syncState.copyWith(
+          syncFolderPath: syncFolderPath,
+        ),
+      ),
+    );
+    return state;
+  }
+}
+
 /// Publishes the new [SyncState] to all child isolates.
 class _PublishSyncStateAction extends ReduxAction<IsolateController, ParentIsolateState> {
   final SyncState syncState;

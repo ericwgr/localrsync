@@ -1017,6 +1017,18 @@ class Translations$receiveTab$syncFolder$en {
 
   /// en: 'Sync'
   String get sync => 'Sync';
+
+  /// en: 'Scanning {processed}/{total} from {ip}'
+  String activityScanning({required Object processed, required Object total, required Object ip}) => 'Scanning ${processed}/${total} from ${ip}';
+
+  /// en: 'Receiving {uploadCount} file(s) from {ip}'
+  String activityApplying({required Object uploadCount, required Object ip}) => 'Receiving ${uploadCount} file(s) from ${ip}';
+
+  /// en: '{uploadCount} file(s) received, {deleted} deleted'
+  String activityCommitted({required Object uploadCount, required Object deleted}) => '${uploadCount} file(s) received, ${deleted} deleted';
+
+  /// en: 'Sync failed: {error}'
+  String activityFailed({required Object error}) => 'Sync failed: ${error}';
 }
 
 // Path: sendTab.selection
@@ -1994,6 +2006,45 @@ class Translations$dialogs$syncDevice$en {
 
   /// en: 'Querying…'
   String get querying => 'Querying…';
+
+  /// en: 'Start sync'
+  String get startSync => 'Start sync';
+
+  /// en: 'Syncing…'
+  String get syncing => 'Syncing…';
+
+  /// en: 'Sync again'
+  String get syncAgain => 'Sync again';
+
+  /// en: 'Cancel sync'
+  String get cancelSync => 'Cancel sync';
+
+  /// en: 'Done'
+  String get close => 'Done';
+
+  /// en: 'Your local sync folder is not set. Set it in the Receive tab first.'
+  String get localSyncFolderNotSet => 'Your local sync folder is not set. Set it in the Receive tab first.';
+
+  /// en: 'Scanning {processed}/{total}'
+  String phaseScanning({required Object processed, required Object total}) => 'Scanning ${processed}/${total}';
+
+  /// en: '{upload} file(s) to upload, {delete} to delete'
+  String phaseDiff({required Object upload, required Object delete}) => '${upload} file(s) to upload, ${delete} to delete';
+
+  /// en: 'Uploading {done}/{total}'
+  String phaseUploading({required Object done, required Object total}) => 'Uploading ${done}/${total}';
+
+  /// en: 'Deleted {deleted} file(s) on device'
+  String phaseCommitted({required Object deleted}) => 'Deleted ${deleted} file(s) on device';
+
+  /// en: 'Sync completed ({uploaded} uploaded, {deleted} deleted)'
+  String phaseDone({required Object uploaded, required Object deleted}) => 'Sync completed (${uploaded} uploaded, ${deleted} deleted)';
+
+  /// en: 'Sync failed: {error}'
+  String phaseFailed({required Object error}) => 'Sync failed: ${error}';
+
+  /// en: 'Sync canceled'
+  String get phaseCanceled => 'Sync canceled';
 }
 
 // Path: settingsTab.general.brightnessOptions

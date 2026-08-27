@@ -93,6 +93,28 @@ Future<FileSaveTarget> prepareFileSaveTarget({
   );
 }
 
+/// Prepares the destination for an incoming sync file: the exact [relativePath]
+/// inside [syncFolderPath] is used verbatim. No de-duplication renaming, no
+/// gallery and no SAF; parent directories are created as needed.
+///
+/// [relativePath] originates from a manifest that the Rust server validated
+/// (`is_safe_relative_path`), so it cannot contain `..` or absolute segments.
+Future<FileSaveTarget> prepareSyncFileSaveTarget({
+  required String syncFolderPath,
+  required String relativePath,
+}) async {
+  final destinationPath = p.join(syncFolderPath, relativePath);
+  final parent = Directory(p.dirname(destinationPath));
+  if (!parent.existsSync()) {
+    await parent.create(recursive: true);
+  }
+  return FileSaveTarget(
+    path: destinationPath,
+    fileDescriptor: null,
+    displayPath: destinationPath,
+  );
+}
+
 /// Prepares [target] for another attempt at the same file, e.g. after the
 /// previous attempt was rejected because of a checksum mismatch.
 ///

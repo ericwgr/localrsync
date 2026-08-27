@@ -31,6 +31,113 @@ pub enum SyncFolderInfoResultV2 {
     NotConfigured,
 }
 
+/// A single file or directory entry of a sync manifest.
+///
+/// The source device lists its files and directories so the destination can
+/// diff them against its own directory. The comparison is authoritative on
+/// `sha256` (empty for directories); the other fields are carried along for
+/// future needs (e.g. block-level delta) and are not used by the diff.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncFileInfoV2 {
+    /// Path relative to the sync folder root.
+    /// Must not be absolute and must not contain `..` segments —
+    /// the destination rejects such paths, since the path is where
+    /// uploads are stored and what deletions target.
+    pub path: String,
+
+    /// Size of the entry in bytes (0 for directories).
+    pub size: u64,
+
+    /// Seconds since the Unix epoch of the last modification.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mtime: Option<u64>,
+
+    /// SHA-256 of the file content (hex, lowercase).
+    /// The authoritative content identity for the comparison.
+    /// Empty for directories.
+    pub sha256: String,
+
+    /// Whether the entry is a directory. Directories carry no content, but
+    /// the listing includes them so the destination can mirror the source's
+    /// empty folders: it keeps the ones the source has and deletes only the
+    /// ones it does not.
+    #[serde(default)]
+    pub is_dir: bool,
+}
+
+/// The source device's directory listing, submitted by a sync initiator.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncManifestRequestV2 {
+    /// Identifies the folder being synced. `"default"` for the app's single
+    /// sync folder; reserved for future multi-folder support.
+    pub folder_id: String,
+
+    /// The files of the source folder, with paths relative to its root.
+    pub files: Vec<SyncFileInfoV2>,
+}
+
+/// The diff of a source manifest against the destination directory.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncDiffV2 {
+    /// Session that authorizes a later `POST /api/localsend/v2/sync/commit` to delete
+    /// files. Only deletions listed in this diff may be committed.
+    pub session_id: String,
+
+    /// Files the destination is missing or whose `sha256` differs.
+    /// The initiator uploads these via the regular v2 upload API.
+    pub need_upload: Vec<String>,
+
+    /// Files that exist on the destination but not in the manifest.
+    /// Deletion must happen via a commit, so uploads are guaranteed to
+    /// have succeeded first.
+    pub delete_remote: Vec<String>,
+
+    /// Directories that exist only on the destination (not in the manifest
+    /// listing), whose entire content is being deleted, so they become empty
+    /// once the commit applied. Deleted after `delete_remote`, deepest first;
+    /// a directory that is still not empty is kept.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub delete_dirs: Vec<String>,
+}
+
+/// Instructs the destination to delete files previously reported in
+/// [`SyncDiffV2::delete_remote`], i.e. after all uploads succeeded.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncCommitRequestV2 {
+    /// The session that authorized the deletions.
+    pub session_id: String,
+
+    /// The relative paths of files to delete. Must be a subset of the
+    /// `delete_remote` of the authorized diff.
+    pub delete_remote: Vec<String>,
+
+    /// The relative paths of (empty) directories to delete. Must be a subset
+    /// of the `delete_dirs` of the authorized diff.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub delete_dirs: Vec<String>,
+}
+
+/// Result of a `POST /api/localsend/v2/sync/manifest` request.
+#[derive(Debug, Clone)]
+pub enum SyncManifestResultV2 {
+    /// The destination computed a diff; proceed with the sync.
+    Diff(SyncDiffV2),
+
+    /// The destination refused the sync (e.g. no sync folder configured,
+    /// HTTPS required, or the sync was declined).
+    Rejected {
+        /// The HTTP status code the destination answered with.
+        status: u16,
+
+        /// The error message from the destination.
+        message: String,
+    },
+}
+
 /// Register request DTO for v2.2 protocol.
 ///
 /// Sent to POST /api/localsend/v2/register for device discovery.

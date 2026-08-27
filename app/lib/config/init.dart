@@ -23,6 +23,7 @@ import 'package:localsend_app/provider/purchase_provider.dart';
 // [FOSS_REMOVE_END]
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/sync_folder_provider.dart';
 import 'package:localsend_app/provider/tv_provider.dart';
 import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/provider/window_dimensions_provider.dart';
@@ -169,6 +170,10 @@ Future<RefenaContainer> preInit(List<String> args) async {
             discoveryTimeout: settings.discoveryTimeout,
             serverRunning: true,
             download: false,
+            // The sync folder path is published to the children right after
+            // the setup (see postInit: the receive tab dispatches the current
+            // folder), so the initial value is irrelevant.
+            syncFolderPath: null,
           ),
         ),
       );
@@ -185,6 +190,11 @@ StreamSubscription? _sharedMediaSubscription;
 /// Will be called when home page has been initialized
 Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
   await updateSystemOverlayStyle(context);
+
+  // The child isolates need to know the configured sync folder to answer
+  // sync manifests and to store the received sync files. Publishing here
+  // also covers the folder configured in a previous session.
+  ref.redux(parentIsolateProvider).dispatch(IsolateSyncFolderStateAction(syncFolderPath: ref.read(syncFolderProvider).path));
 
   if (checkPlatform([TargetPlatform.android])) {
     try {

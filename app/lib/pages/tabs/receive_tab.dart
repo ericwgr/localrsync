@@ -2,25 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/state/server/server_state.dart';
-import 'package:localsend_app/pages/home_page.dart';
-import 'package:localsend_app/pages/home_page_controller.dart';
 import 'package:localsend_app/pages/receive_history_page.dart';
 import 'package:localsend_app/pages/web_share_page.dart';
-import 'package:localsend_app/provider/animation_provider.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/provider/sync_folder_provider.dart';
+import 'package:localsend_app/provider/sync_receive_provider.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart';
 import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:localsend_app/widget/animations/initial_fade_transition.dart';
 import 'package:localsend_app/widget/column_list_view.dart';
 import 'package:localsend_app/widget/custom_icon_button.dart';
 import 'package:localsend_app/widget/dialogs/folder_picker_dialog.dart';
 import 'package:localsend_app/widget/dialogs/storage_permission_dialog.dart';
 import 'package:localsend_app/widget/dialogs/sync_device_dialog.dart';
-import 'package:localsend_app/widget/local_send_logo.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:localsend_app/widget/rotating_widget.dart';
 import 'package:localsend_isolates/util/file_size_helper.dart';
@@ -99,7 +97,7 @@ class _ReceiveTabState extends State<ReceiveTab> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: ResponsiveListView.defaultMaxWidth),
             child: Padding(
-              padding: const EdgeInsets.all(30),
+              padding: const EdgeInsets.all(15),
               child: ColumnListView(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -107,24 +105,9 @@ class _ReceiveTabState extends State<ReceiveTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        InitialFadeTransition(
-                          duration: const Duration(milliseconds: 300),
-                          delay: const Duration(milliseconds: 200),
-                          child: Consumer(
-                            builder: (context, ref) {
-                              final animations = ref.watch(animationProvider);
-                              final activeTab = ref.watch(homePageControllerProvider.select((state) => state.currentTab));
-                              return RotatingWidget(
-                                duration: const Duration(seconds: 15),
-                                spinning: serverState != null && animations && activeTab == HomeTab.receive,
-                                child: const LocalSendLogo(withText: false),
-                              );
-                            },
-                          ),
-                        ),
                         FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(serverState?.alias ?? alias, style: const TextStyle(fontSize: 48)),
+                          child: Text(serverState?.alias ?? alias, style: const TextStyle(fontSize: 24)),
                         ),
                         Visibility(
                           visible: serverState == null,
@@ -439,10 +422,93 @@ class _SyncFolderSection extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const _SyncActivityBanner(),
                   ],
                 ),
               ),
             ),
+    );
+  }
+}
+
+/// Shows the activity of the inbound sync engine (another device mirroring
+/// its folder into the sync folder of this device) and notifies with a
+/// snackbar when a sync finished or failed.
+class _SyncActivityBanner extends StatefulWidget {
+  const _SyncActivityBanner();
+
+  @override
+  State<_SyncActivityBanner> createState() => _SyncActivityBannerState();
+}
+
+class _SyncActivityBannerState extends State<_SyncActivityBanner> with Refena {
+  SyncReceivePhase _lastPhase = SyncReceivePhase.idle;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(syncReceiveProvider);
+    if (state.phase == SyncReceivePhase.idle) {
+      _lastPhase = SyncReceivePhase.idle;
+      return const SizedBox.shrink();
+    }
+
+    final strings = t.receiveTab.syncFolder;
+    final (text, isError) = switch (state.phase) {
+      SyncReceivePhase.scanning => (
+        strings.activityScanning(ip: state.peerIp ?? '', processed: state.scanProcessed, total: state.scanTotal),
+        false,
+      ),
+      SyncReceivePhase.applying => (
+        strings.activityApplying(ip: state.peerIp ?? '', uploadCount: state.uploadCount),
+        false,
+      ),
+      SyncReceivePhase.committed => (
+        strings.activityCommitted(uploadCount: state.uploadCount, deleted: state.committedDeletes),
+        false,
+      ),
+      SyncReceivePhase.failed => (
+        strings.activityFailed(error: state.error ?? ''),
+        true,
+      ),
+      SyncReceivePhase.idle => ('', false),
+    };
+
+    if (state.phase != _lastPhase) {
+      _lastPhase = state.phase;
+      if (state.phase == SyncReceivePhase.committed || state.phase == SyncReceivePhase.failed) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          context.showSnackBar(text);
+        });
+      }
+    }
+
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: isError ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.sync,
+            size: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: style,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

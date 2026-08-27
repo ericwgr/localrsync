@@ -55,7 +55,7 @@ extension RsServerEventPatterns on RsServerEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,TResult Function( RsServerEvent_SyncManifestRequested value)?  syncManifestRequested,TResult Function( RsServerEvent_SyncCommitRequested value)?  syncCommitRequested,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -69,7 +69,9 @@ return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFi
 return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
 return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
-return syncFolderInfoRequested(_that);case _:
+return syncFolderInfoRequested(_that);case RsServerEvent_SyncManifestRequested() when syncManifestRequested != null:
+return syncManifestRequested(_that);case RsServerEvent_SyncCommitRequested() when syncCommitRequested != null:
+return syncCommitRequested(_that);case _:
   return orElse();
 
 }
@@ -87,7 +89,7 @@ return syncFolderInfoRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,required TResult Function( RsServerEvent_SyncFolderInfoRequested value)  syncFolderInfoRequested,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,required TResult Function( RsServerEvent_SyncFolderInfoRequested value)  syncFolderInfoRequested,required TResult Function( RsServerEvent_SyncManifestRequested value)  syncManifestRequested,required TResult Function( RsServerEvent_SyncCommitRequested value)  syncCommitRequested,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
@@ -101,7 +103,9 @@ return webPrepareDownload(_that);case RsServerEvent_WebFileDownload():
 return webFileDownload(_that);case RsServerEvent_Show():
 return show_(_that);case RsServerEvent_ListenerFailed():
 return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested():
-return syncFolderInfoRequested(_that);}
+return syncFolderInfoRequested(_that);case RsServerEvent_SyncManifestRequested():
+return syncManifestRequested(_that);case RsServerEvent_SyncCommitRequested():
+return syncCommitRequested(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -115,7 +119,7 @@ return syncFolderInfoRequested(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult? Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,TResult? Function( RsServerEvent_SyncFolderInfoRequested value)?  syncFolderInfoRequested,TResult? Function( RsServerEvent_SyncManifestRequested value)?  syncManifestRequested,TResult? Function( RsServerEvent_SyncCommitRequested value)?  syncCommitRequested,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -129,7 +133,9 @@ return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFi
 return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
 return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
-return syncFolderInfoRequested(_that);case _:
+return syncFolderInfoRequested(_that);case RsServerEvent_SyncManifestRequested() when syncManifestRequested != null:
+return syncManifestRequested(_that);case RsServerEvent_SyncCommitRequested() when syncCommitRequested != null:
+return syncCommitRequested(_that);case _:
   return null;
 
 }
@@ -146,7 +152,7 @@ return syncFolderInfoRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( List<String> args)?  show_,TResult Function( String error)?  listenerFailed,TResult Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( List<String> args)?  show_,TResult Function( String error)?  listenerFailed,TResult Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,TResult Function( String ip,  String? certFingerprint,  SyncManifestRequestV2 manifest,  String sessionId)?  syncManifestRequested,TResult Function( String ip,  String sessionId,  List<String> deleteRemote,  List<String> deleteDirs)?  syncCommitRequested,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -159,7 +165,9 @@ return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServe
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
 return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
-return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case _:
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case RsServerEvent_SyncManifestRequested() when syncManifestRequested != null:
+return syncManifestRequested(_that.ip,_that.certFingerprint,_that.manifest,_that.sessionId);case RsServerEvent_SyncCommitRequested() when syncCommitRequested != null:
+return syncCommitRequested(_that.ip,_that.sessionId,_that.deleteRemote,_that.deleteDirs);case _:
   return orElse();
 
 }
@@ -177,7 +185,7 @@ return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( List<String> args)  show_,required TResult Function( String error)  listenerFailed,required TResult Function( String ip,  String? certFingerprint)  syncFolderInfoRequested,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( List<String> args)  show_,required TResult Function( String error)  listenerFailed,required TResult Function( String ip,  String? certFingerprint)  syncFolderInfoRequested,required TResult Function( String ip,  String? certFingerprint,  SyncManifestRequestV2 manifest,  String sessionId)  syncManifestRequested,required TResult Function( String ip,  String sessionId,  List<String> deleteRemote,  List<String> deleteDirs)  syncCommitRequested,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload():
@@ -190,7 +198,9 @@ return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServe
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show():
 return show_(_that.args);case RsServerEvent_ListenerFailed():
 return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested():
-return syncFolderInfoRequested(_that.ip,_that.certFingerprint);}
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case RsServerEvent_SyncManifestRequested():
+return syncManifestRequested(_that.ip,_that.certFingerprint,_that.manifest,_that.sessionId);case RsServerEvent_SyncCommitRequested():
+return syncCommitRequested(_that.ip,_that.sessionId,_that.deleteRemote,_that.deleteDirs);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,7 +214,7 @@ return syncFolderInfoRequested(_that.ip,_that.certFingerprint);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( List<String> args)?  show_,TResult? Function( String error)?  listenerFailed,TResult? Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( List<String> args)?  show_,TResult? Function( String error)?  listenerFailed,TResult? Function( String ip,  String? certFingerprint)?  syncFolderInfoRequested,TResult? Function( String ip,  String? certFingerprint,  SyncManifestRequestV2 manifest,  String sessionId)?  syncManifestRequested,TResult? Function( String ip,  String sessionId,  List<String> deleteRemote,  List<String> deleteDirs)?  syncCommitRequested,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -217,7 +227,9 @@ return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServe
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
 return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that.error);case RsServerEvent_SyncFolderInfoRequested() when syncFolderInfoRequested != null:
-return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case _:
+return syncFolderInfoRequested(_that.ip,_that.certFingerprint);case RsServerEvent_SyncManifestRequested() when syncManifestRequested != null:
+return syncManifestRequested(_that.ip,_that.certFingerprint,_that.manifest,_that.sessionId);case RsServerEvent_SyncCommitRequested() when syncCommitRequested != null:
+return syncCommitRequested(_that.ip,_that.sessionId,_that.deleteRemote,_that.deleteDirs);case _:
   return null;
 
 }
@@ -997,6 +1009,468 @@ class _$RsServerEvent_SyncFolderInfoRequestedCopyWithImpl<$Res>
 ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
 as String,certFingerprint: freezed == certFingerprint ? _self.certFingerprint : certFingerprint // ignore: cast_nullable_to_non_nullable
 as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsServerEvent_SyncManifestRequested extends RsServerEvent {
+  const RsServerEvent_SyncManifestRequested({required this.ip, this.certFingerprint, required this.manifest, required this.sessionId}): super._();
+  
+
+/// The IP address of the initiator.
+ final  String ip;
+/// The SHA-256 fingerprint (uppercase hex) of the initiator's client
+/// certificate verified during the mTLS handshake. Always `Some`:
+/// the endpoint requires a verified certificate.
+ final  String? certFingerprint;
+/// The submitted directory listing.
+ final  SyncManifestRequestV2 manifest;
+/// The session that an accepted decision must carry.
+ final  String sessionId;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_SyncManifestRequestedCopyWith<RsServerEvent_SyncManifestRequested> get copyWith => _$RsServerEvent_SyncManifestRequestedCopyWithImpl<RsServerEvent_SyncManifestRequested>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_SyncManifestRequested&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.certFingerprint, certFingerprint) || other.certFingerprint == certFingerprint)&&(identical(other.manifest, manifest) || other.manifest == manifest)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,certFingerprint,manifest,sessionId);
+
+@override
+String toString() {
+  return 'RsServerEvent.syncManifestRequested(ip: $ip, certFingerprint: $certFingerprint, manifest: $manifest, sessionId: $sessionId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_SyncManifestRequestedCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_SyncManifestRequestedCopyWith(RsServerEvent_SyncManifestRequested value, $Res Function(RsServerEvent_SyncManifestRequested) _then) = _$RsServerEvent_SyncManifestRequestedCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String? certFingerprint, SyncManifestRequestV2 manifest, String sessionId
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_SyncManifestRequestedCopyWithImpl<$Res>
+    implements $RsServerEvent_SyncManifestRequestedCopyWith<$Res> {
+  _$RsServerEvent_SyncManifestRequestedCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_SyncManifestRequested _self;
+  final $Res Function(RsServerEvent_SyncManifestRequested) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? certFingerprint = freezed,Object? manifest = null,Object? sessionId = null,}) {
+  return _then(RsServerEvent_SyncManifestRequested(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,certFingerprint: freezed == certFingerprint ? _self.certFingerprint : certFingerprint // ignore: cast_nullable_to_non_nullable
+as String?,manifest: null == manifest ? _self.manifest : manifest // ignore: cast_nullable_to_non_nullable
+as SyncManifestRequestV2,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsServerEvent_SyncCommitRequested extends RsServerEvent {
+  const RsServerEvent_SyncCommitRequested({required this.ip, required this.sessionId, required final  List<String> deleteRemote, required final  List<String> deleteDirs}): _deleteRemote = deleteRemote,_deleteDirs = deleteDirs,super._();
+  
+
+/// The IP address of the initiator.
+ final  String ip;
+/// The session of the manifest that authorized the deletions.
+ final  String sessionId;
+/// The relative paths of files to delete from the sync folder.
+ final  List<String> _deleteRemote;
+/// The relative paths of files to delete from the sync folder.
+ List<String> get deleteRemote {
+  if (_deleteRemote is EqualUnmodifiableListView) return _deleteRemote;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_deleteRemote);
+}
+
+/// The relative paths of (empty) directories to delete.
+ final  List<String> _deleteDirs;
+/// The relative paths of (empty) directories to delete.
+ List<String> get deleteDirs {
+  if (_deleteDirs is EqualUnmodifiableListView) return _deleteDirs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_deleteDirs);
+}
+
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_SyncCommitRequestedCopyWith<RsServerEvent_SyncCommitRequested> get copyWith => _$RsServerEvent_SyncCommitRequestedCopyWithImpl<RsServerEvent_SyncCommitRequested>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_SyncCommitRequested&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&const DeepCollectionEquality().equals(other._deleteRemote, _deleteRemote)&&const DeepCollectionEquality().equals(other._deleteDirs, _deleteDirs));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,sessionId,const DeepCollectionEquality().hash(_deleteRemote),const DeepCollectionEquality().hash(_deleteDirs));
+
+@override
+String toString() {
+  return 'RsServerEvent.syncCommitRequested(ip: $ip, sessionId: $sessionId, deleteRemote: $deleteRemote, deleteDirs: $deleteDirs)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_SyncCommitRequestedCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_SyncCommitRequestedCopyWith(RsServerEvent_SyncCommitRequested value, $Res Function(RsServerEvent_SyncCommitRequested) _then) = _$RsServerEvent_SyncCommitRequestedCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String sessionId, List<String> deleteRemote, List<String> deleteDirs
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_SyncCommitRequestedCopyWithImpl<$Res>
+    implements $RsServerEvent_SyncCommitRequestedCopyWith<$Res> {
+  _$RsServerEvent_SyncCommitRequestedCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_SyncCommitRequested _self;
+  final $Res Function(RsServerEvent_SyncCommitRequested) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? sessionId = null,Object? deleteRemote = null,Object? deleteDirs = null,}) {
+  return _then(RsServerEvent_SyncCommitRequested(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,deleteRemote: null == deleteRemote ? _self._deleteRemote : deleteRemote // ignore: cast_nullable_to_non_nullable
+as List<String>,deleteDirs: null == deleteDirs ? _self._deleteDirs : deleteDirs // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$RsSyncManifestDecision {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsSyncManifestDecision);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'RsSyncManifestDecision()';
+}
+
+
+}
+
+/// @nodoc
+class $RsSyncManifestDecisionCopyWith<$Res>  {
+$RsSyncManifestDecisionCopyWith(RsSyncManifestDecision _, $Res Function(RsSyncManifestDecision) __);
+}
+
+
+/// Adds pattern-matching-related methods to [RsSyncManifestDecision].
+extension RsSyncManifestDecisionPatterns on RsSyncManifestDecision {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsSyncManifestDecision_Apply value)?  apply,TResult Function( RsSyncManifestDecision_Reject value)?  reject,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply() when apply != null:
+return apply(_that);case RsSyncManifestDecision_Reject() when reject != null:
+return reject(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsSyncManifestDecision_Apply value)  apply,required TResult Function( RsSyncManifestDecision_Reject value)  reject,}){
+final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply():
+return apply(_that);case RsSyncManifestDecision_Reject():
+return reject(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsSyncManifestDecision_Apply value)?  apply,TResult? Function( RsSyncManifestDecision_Reject value)?  reject,}){
+final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply() when apply != null:
+return apply(_that);case RsSyncManifestDecision_Reject() when reject != null:
+return reject(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( SyncDiffV2 field0)?  apply,TResult Function( int status,  String message)?  reject,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply() when apply != null:
+return apply(_that.field0);case RsSyncManifestDecision_Reject() when reject != null:
+return reject(_that.status,_that.message);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( SyncDiffV2 field0)  apply,required TResult Function( int status,  String message)  reject,}) {final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply():
+return apply(_that.field0);case RsSyncManifestDecision_Reject():
+return reject(_that.status,_that.message);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( SyncDiffV2 field0)?  apply,TResult? Function( int status,  String message)?  reject,}) {final _that = this;
+switch (_that) {
+case RsSyncManifestDecision_Apply() when apply != null:
+return apply(_that.field0);case RsSyncManifestDecision_Reject() when reject != null:
+return reject(_that.status,_that.message);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class RsSyncManifestDecision_Apply extends RsSyncManifestDecision {
+  const RsSyncManifestDecision_Apply(this.field0): super._();
+  
+
+ final  SyncDiffV2 field0;
+
+/// Create a copy of RsSyncManifestDecision
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsSyncManifestDecision_ApplyCopyWith<RsSyncManifestDecision_Apply> get copyWith => _$RsSyncManifestDecision_ApplyCopyWithImpl<RsSyncManifestDecision_Apply>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsSyncManifestDecision_Apply&&(identical(other.field0, field0) || other.field0 == field0));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,field0);
+
+@override
+String toString() {
+  return 'RsSyncManifestDecision.apply(field0: $field0)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsSyncManifestDecision_ApplyCopyWith<$Res> implements $RsSyncManifestDecisionCopyWith<$Res> {
+  factory $RsSyncManifestDecision_ApplyCopyWith(RsSyncManifestDecision_Apply value, $Res Function(RsSyncManifestDecision_Apply) _then) = _$RsSyncManifestDecision_ApplyCopyWithImpl;
+@useResult
+$Res call({
+ SyncDiffV2 field0
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsSyncManifestDecision_ApplyCopyWithImpl<$Res>
+    implements $RsSyncManifestDecision_ApplyCopyWith<$Res> {
+  _$RsSyncManifestDecision_ApplyCopyWithImpl(this._self, this._then);
+
+  final RsSyncManifestDecision_Apply _self;
+  final $Res Function(RsSyncManifestDecision_Apply) _then;
+
+/// Create a copy of RsSyncManifestDecision
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? field0 = null,}) {
+  return _then(RsSyncManifestDecision_Apply(
+null == field0 ? _self.field0 : field0 // ignore: cast_nullable_to_non_nullable
+as SyncDiffV2,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsSyncManifestDecision_Reject extends RsSyncManifestDecision {
+  const RsSyncManifestDecision_Reject({required this.status, required this.message}): super._();
+  
+
+ final  int status;
+ final  String message;
+
+/// Create a copy of RsSyncManifestDecision
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsSyncManifestDecision_RejectCopyWith<RsSyncManifestDecision_Reject> get copyWith => _$RsSyncManifestDecision_RejectCopyWithImpl<RsSyncManifestDecision_Reject>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsSyncManifestDecision_Reject&&(identical(other.status, status) || other.status == status)&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,status,message);
+
+@override
+String toString() {
+  return 'RsSyncManifestDecision.reject(status: $status, message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsSyncManifestDecision_RejectCopyWith<$Res> implements $RsSyncManifestDecisionCopyWith<$Res> {
+  factory $RsSyncManifestDecision_RejectCopyWith(RsSyncManifestDecision_Reject value, $Res Function(RsSyncManifestDecision_Reject) _then) = _$RsSyncManifestDecision_RejectCopyWithImpl;
+@useResult
+$Res call({
+ int status, String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsSyncManifestDecision_RejectCopyWithImpl<$Res>
+    implements $RsSyncManifestDecision_RejectCopyWith<$Res> {
+  _$RsSyncManifestDecision_RejectCopyWithImpl(this._self, this._then);
+
+  final RsSyncManifestDecision_Reject _self;
+  final $Res Function(RsSyncManifestDecision_Reject) _then;
+
+/// Create a copy of RsSyncManifestDecision
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? status = null,Object? message = null,}) {
+  return _then(RsSyncManifestDecision_Reject(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

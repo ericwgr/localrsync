@@ -59,7 +59,11 @@
       "unavailable": "Size unavailable",
       "refresh": "Refresh folder size",
       "change": "Change folder",
-      "sync": "Sync"
+      "sync": "Sync",
+      "activityScanning": "Scanning {processed}/{total} from {ip}",
+      "activityApplying": "Receiving {uploadCount} file(s) from {ip}",
+      "activityCommitted": "{uploadCount} file(s) received, {deleted} deleted",
+      "activityFailed": "Sync failed: {error}"
     }
   },
   "sendTab": {
@@ -569,7 +573,20 @@
       "folderSize": "Folder size",
       "notConfigured": "This device has not set a sync folder",
       "queryFailed": "Failed to query the device",
-      "querying": "Querying…"
+      "querying": "Querying…",
+      "startSync": "Start sync",
+      "syncing": "Syncing…",
+      "syncAgain": "Sync again",
+      "cancelSync": "Cancel sync",
+      "close": "Done",
+      "localSyncFolderNotSet": "Your local sync folder is not set. Set it in the Receive tab first.",
+      "phaseScanning": "Scanning {processed}/{total}",
+      "phaseDiff": "{upload} file(s) to upload, {delete} to delete",
+      "phaseUploading": "Uploading {done}/{total}",
+      "phaseCommitted": "Deleted {deleted} file(s) on device",
+      "phaseDone": "Sync completed ({uploaded} uploaded, {deleted} deleted)",
+      "phaseFailed": "Sync failed: {error}",
+      "phaseCanceled": "Sync canceled"
     }
   },
   "sanitization": {

@@ -80,6 +80,7 @@ const _multicastGroupKey = 'ls_multicast_group';
 const _destinationKey = 'ls_destination';
 const _syncFolderPathKey = 'ls_sync_folder_path';
 const _syncFolderSizeKey = 'ls_sync_folder_size';
+const _lastSyncAddressKey = 'ls_last_sync_address';
 const _saveToGallery = 'ls_save_to_gallery';
 const _saveToHistory = 'ls_save_to_history';
 const _quickSave = 'ls_quick_save'; // a QuickSaveMode; was a bool until storage version 2 ('ls_quick_save_from_favorites' is merged into this key)
@@ -452,6 +453,18 @@ class PersistenceService {
       await _prefs.remove(_syncFolderSizeKey);
     } else {
       await _prefs.setInt(_syncFolderSizeKey, size);
+    }
+  }
+
+  String? getLastSyncAddress() {
+    return _prefs.getString(_lastSyncAddressKey);
+  }
+
+  Future<void> setLastSyncAddress(String? address) async {
+    if (address == null || address.isEmpty) {
+      await _prefs.remove(_lastSyncAddressKey);
+    } else {
+      await _prefs.setString(_lastSyncAddressKey, address);
     }
   }
 

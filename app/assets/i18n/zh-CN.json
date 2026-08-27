@@ -59,7 +59,11 @@
       "unavailable": "无法获取文件夹大小",
       "refresh": "重新获取文件夹大小",
       "change": "更换文件夹",
-      "sync": "同步"
+      "sync": "同步",
+      "activityScanning": "正在为 {ip} 扫描 {processed}/{total}",
+      "activityApplying": "正在从 {ip} 接收 {uploadCount} 个文件",
+      "activityCommitted": "已接收 {uploadCount} 个文件，已删除 {deleted} 项",
+      "activityFailed": "同步失败：{error}"
     }
   },
   "sendTab": {
@@ -568,7 +572,20 @@
       "folderSize": "文件夹大小",
       "notConfigured": "该设备尚未设置同步文件夹",
       "queryFailed": "查询设备信息失败",
-      "querying": "查询中…"
+      "querying": "查询中…",
+      "startSync": "开始同步",
+      "syncing": "同步中…",
+      "syncAgain": "再次同步",
+      "cancelSync": "取消同步",
+      "close": "完成",
+      "localSyncFolderNotSet": "尚未设置本地同步文件夹，请先在接收页设置。",
+      "phaseScanning": "正在扫描 {processed}/{total}",
+      "phaseDiff": "将上传 {upload} 个文件、删除 {delete} 个文件",
+      "phaseUploading": "正在上传 {done}/{total}",
+      "phaseCommitted": "已在设备上删除 {deleted} 个文件",
+      "phaseDone": "同步完成（上传 {uploaded} 个，删除 {deleted} 个）",
+      "phaseFailed": "同步失败：{error}",
+      "phaseCanceled": "同步已取消"
     }
   },
   "sanitization": {

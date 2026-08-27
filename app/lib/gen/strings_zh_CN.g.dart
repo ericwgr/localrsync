@@ -901,6 +901,14 @@ class Translations$receiveTab$syncFolder$zh_CN extends Translations$receiveTab$s
   String get change => '更换文件夹';
   @override
   String get sync => '同步';
+  @override
+  String activityScanning({required Object ip, required Object processed, required Object total}) => '正在为 ${ip} 扫描 ${processed}/${total}';
+  @override
+  String activityApplying({required Object ip, required Object uploadCount}) => '正在从 ${ip} 接收 ${uploadCount} 个文件';
+  @override
+  String activityCommitted({required Object uploadCount, required Object deleted}) => '已接收 ${uploadCount} 个文件，已删除 ${deleted} 项';
+  @override
+  String activityFailed({required Object error}) => '同步失败：${error}';
 }
 
 // Path: sendTab.selection
@@ -1697,6 +1705,32 @@ class Translations$dialogs$syncDevice$zh_CN extends Translations$dialogs$syncDev
   String get queryFailed => '查询设备信息失败';
   @override
   String get querying => '查询中…';
+  @override
+  String get startSync => '开始同步';
+  @override
+  String get syncing => '同步中…';
+  @override
+  String get syncAgain => '再次同步';
+  @override
+  String get cancelSync => '取消同步';
+  @override
+  String get close => '完成';
+  @override
+  String get localSyncFolderNotSet => '尚未设置本地同步文件夹，请先在接收页设置。';
+  @override
+  String phaseScanning({required Object processed, required Object total}) => '正在扫描 ${processed}/${total}';
+  @override
+  String phaseDiff({required Object upload, required Object delete}) => '将上传 ${upload} 个文件、删除 ${delete} 个文件';
+  @override
+  String phaseUploading({required Object done, required Object total}) => '正在上传 ${done}/${total}';
+  @override
+  String phaseCommitted({required Object deleted}) => '已在设备上删除 ${deleted} 个文件';
+  @override
+  String phaseDone({required Object uploaded, required Object deleted}) => '同步完成（上传 ${uploaded} 个，删除 ${deleted} 个）';
+  @override
+  String phaseFailed({required Object error}) => '同步失败：${error}';
+  @override
+  String get phaseCanceled => '同步已取消';
 }
 
 // Path: settingsTab.general.brightnessOptions

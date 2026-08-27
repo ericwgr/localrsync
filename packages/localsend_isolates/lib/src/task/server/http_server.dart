@@ -129,6 +129,18 @@ class HttpServerService {
     await _requireServer().respondSyncFolderInfo(info: info);
   }
 
+  /// Answers a pending sync manifest request.
+  /// [decision] accepts the sync with the computed diff or rejects it.
+  Future<void> respondSyncManifest({required String sessionId, required RsSyncManifestDecision decision}) async {
+    await _requireServer().respondSyncManifest(sessionId: sessionId, decision: decision);
+  }
+
+  /// Answers a pending sync commit request: reports whether the authorized
+  /// deletions were applied on this device.
+  Future<void> respondSyncCommit({required String sessionId, required bool success}) async {
+    await _requireServer().respondSyncCommit(sessionId: sessionId, success: success);
+  }
+
   /// Stops the server. The event stream returned by [start] will end.
   /// Completes once the port is released and can be bound again.
   Future<void> stop() async {

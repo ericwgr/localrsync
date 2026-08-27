@@ -1,5 +1,6 @@
 import 'package:localsend_app/provider/persistence_provider.dart';
 import 'package:localsend_app/util/directory_size.dart';
+import 'package:localsend_isolates/isolate.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 
 /// State of the "sync folder" feature on the receive tab: the path of the
@@ -44,6 +45,12 @@ class SyncFolderState {
 
 final syncFolderProvider = ReduxProvider<SyncFolderService, SyncFolderState>(
   (ref) => SyncFolderService(ref.read(persistenceProvider)),
+  onChanged: (_, next, ref) {
+    // The sync folder must be known to the server isolate (which scans it
+    // and stores the received sync files) and to the upload isolate (which
+    // scans it before a push). `null` clears it on the children too.
+    ref.redux(parentIsolateProvider).dispatch(IsolateSyncFolderStateAction(syncFolderPath: next.path));
+  },
 );
 
 class SyncFolderService extends ReduxNotifier<SyncFolderState> {

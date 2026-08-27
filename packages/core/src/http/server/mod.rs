@@ -24,6 +24,7 @@ use hyper_util::server::conn::auto::Builder;
 use lru::LruCache;
 use rustls::pki_types::pem::PemObject;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::num::NonZeroUsize;
@@ -62,8 +63,24 @@ pub(crate) struct V2State {
     /// The single upload session slot. Only one session can be active at a time.
     pub(crate) session: Mutex<Option<SessionStateV2>>,
 
+    /// Authorized sync sessions, keyed by session ID. A session is created
+    /// when a manifest is answered with [v2::SyncManifestDecisionV2::Apply]
+    /// and revoked by a successful commit.
+    pub(crate) sync_sessions: Mutex<HashMap<String, SyncSessionV2>>,
+
     /// Maps client IPs to the number of failed PIN attempts.
     pub(crate) pin_attempts: Mutex<LruCache<IpAddr, u32>>,
+}
+
+/// An authorized sync session: the deletions the application decided for the
+/// manifest. Only those paths may be committed; the session is bound to the
+/// initiator's address and revoked after a successful commit.
+pub(crate) struct SyncSessionV2 {
+    /// The IP address of the device that initiated the sync.
+    sender_ip: PeerIp,
+
+    /// The relative paths whose deletion was authorized by the application.
+    authorized_deletes: HashSet<String>,
 }
 
 #[derive(Clone)]
@@ -100,6 +117,7 @@ impl AppState {
                 verify_checksums: config.verify_checksums,
                 event_tx: config.event_tx,
                 session: Mutex::new(None),
+                sync_sessions: Mutex::new(HashMap::new()),
                 pin_attempts: Mutex::new(LruCache::new(NonZeroUsize::new(200).unwrap())),
             })
         });
@@ -635,6 +653,20 @@ async fn handle_request_inner(mut req: Request<Incoming>) -> Result<Response<Box
             }
 
             v2::sync_folder_info(state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/v2/sync/manifest") => {
+            if !v2_enabled {
+                return Err(AppError::Status(StatusCode::NOT_FOUND));
+            }
+
+            v2::sync_manifest(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/v2/sync/commit") => {
+            if !v2_enabled {
+                return Err(AppError::Status(StatusCode::NOT_FOUND));
+            }
+
+            v2::sync_commit(req, state, client_info).await
         }
         // The versioned path is retained for compatibility, but this endpoint is internal.
         (&Method::POST, "/api/localsend/v2/show") => internal::show(req, state).await,

@@ -670,6 +670,18 @@ class SendNotifier extends Notifier<Map<String, SendSessionState>> {
               sessionId: sessionId,
               state: (s) => s?.withFileError(event.fileId, event.error),
             );
+          // The sync push uses its own task stream ([IsolateHttpSyncPushAction]);
+          // these events never arrive here and are handled by the sync dialog.
+          case HttpSyncScanStartedEvent() ||
+              HttpSyncScanProgressEvent() ||
+              HttpSyncDiffEvent() ||
+              HttpSyncFileStartedEvent() ||
+              HttpSyncFileProgressEvent() ||
+              HttpSyncFileFinishedEvent() ||
+              HttpSyncCommittedEvent() ||
+              HttpSyncFinishedEvent() ||
+              HttpSyncFailedEvent():
+            break;
         }
       }
     } catch (e, st) {

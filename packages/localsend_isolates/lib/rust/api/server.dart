@@ -119,11 +119,27 @@ abstract class RsHttpServer implements RustOpaqueInterface {
   /// Passing `None` declines the request.
   Future<void> respondPrepareUpload({List<String>? acceptedFileIds});
 
+  /// Answers the pending [RsServerEvent::SyncCommitRequested] event.
+  ///
+  /// Passing `true` confirms the deletions were applied; the session is
+  /// then revoked by the server. Passing `false` fails the commit with an
+  /// error response and the session stays authorized, so the initiator can
+  /// retry.
+  Future<void> respondSyncCommit({required String sessionId, required bool success});
+
   /// Answers the pending [RsServerEvent::SyncFolderInfoRequested] event.
   ///
   /// Passing `Some(info)` responds with 200 and the folder details.
   /// Passing `None` responds with 204 (no sync folder configured).
   Future<void> respondSyncFolderInfo({SyncFolderInfoDtoV2? info});
+
+  /// Answers the pending [RsServerEvent::SyncManifestRequested] event.
+  ///
+  /// Passing [RsSyncManifestDecision::Apply] accepts the sync; the diff is
+  /// returned to the initiator and its `delete_remote` becomes committable
+  /// under the session. Passing [RsSyncManifestDecision::Reject] refuses
+  /// the sync with the given status and message.
+  Future<void> respondSyncManifest({required String sessionId, required RsSyncManifestDecision decision});
 
   /// Stops the server.
   /// Returns after the listeners are closed, so the port can be bound again.
@@ -283,6 +299,66 @@ sealed class RsServerEvent with _$RsServerEvent {
     /// server runs without TLS.
     String? certFingerprint,
   }) = RsServerEvent_SyncFolderInfoRequested;
+
+  /// A sync initiator submits its directory listing via
+  /// `POST /api/localsend/v2/sync/manifest`.
+  ///
+  /// Must be answered with [RsHttpServer::respond_sync_manifest]. The
+  /// application diffs the listing against its own sync folder and answers
+  /// with the computed diff (whose `delete_remote` becomes committable
+  /// under [session_id]) or a rejection.
+  const factory RsServerEvent.syncManifestRequested({
+    /// The IP address of the initiator.
+    required String ip,
+
+    /// The SHA-256 fingerprint (uppercase hex) of the initiator's client
+    /// certificate verified during the mTLS handshake. Always `Some`:
+    /// the endpoint requires a verified certificate.
+    String? certFingerprint,
+
+    /// The submitted directory listing.
+    required SyncManifestRequestV2 manifest,
+
+    /// The session that an accepted decision must carry.
+    required String sessionId,
+  }) = RsServerEvent_SyncManifestRequested;
+
+  /// A sync initiator requests the deletion of files via
+  /// `POST /api/localsend/v2/sync/commit`.
+  ///
+  /// The paths are authorized deletions of the session; the application
+  /// must delete them and answer with [RsHttpServer::respond_sync_commit].
+  const factory RsServerEvent.syncCommitRequested({
+    /// The IP address of the initiator.
+    required String ip,
+
+    /// The session of the manifest that authorized the deletions.
+    required String sessionId,
+
+    /// The relative paths of files to delete from the sync folder.
+    required List<String> deleteRemote,
+
+    /// The relative paths of (empty) directories to delete.
+    required List<String> deleteDirs,
+  }) = RsServerEvent_SyncCommitRequested;
+}
+
+@freezed
+sealed class RsSyncManifestDecision with _$RsSyncManifestDecision {
+  const RsSyncManifestDecision._();
+
+  /// Accept the sync with the computed diff. The diff's `delete_remote`
+  /// then becomes committable under the session the server generated.
+  const factory RsSyncManifestDecision.apply(
+    SyncDiffV2 field0,
+  ) = RsSyncManifestDecision_Apply;
+
+  /// Reject the sync with a status code and an error message for the
+  /// initiator.
+  const factory RsSyncManifestDecision.reject({
+    required int status,
+    required String message,
+  }) = RsSyncManifestDecision_Reject;
 }
 
 enum SessionEndReasonV2 {

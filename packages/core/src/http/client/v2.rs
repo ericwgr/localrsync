@@ -3,7 +3,8 @@ use crate::http::client::url::{ApiVersion, TargetUrl};
 use crate::http::dto_v2::{
     InfoResponseDtoV2, PrepareDownloadResponseDtoV2, PrepareUploadRequestDtoV2,
     PrepareUploadResponseDtoV2, PrepareUploadResultV2, RegisterDtoV2, RegisterResponseDtoV2,
-    SyncFolderInfoDtoV2, SyncFolderInfoResultV2,
+    SyncCommitRequestV2, SyncDiffV2, SyncFileInfoV2, SyncFolderInfoDtoV2, SyncFolderInfoResultV2,
+    SyncManifestRequestV2, SyncManifestResultV2,
 };
 use crate::model::discovery::ProtocolType;
 use futures_util::StreamExt;
@@ -379,6 +380,105 @@ impl LsHttpClientV2 {
                 Ok(SyncFolderInfoResultV2::Info(body))
             }
             StatusCode::NO_CONTENT => Ok(SyncFolderInfoResultV2::NotConfigured),
+            _ => res.into_error().await,
+        }
+    }
+
+    /// Submits a sync manifest to another device.
+    ///
+    /// POST /api/localsend/v2/sync/manifest
+    ///
+    /// This is a LocalRsync extension, not part of the LocalSend protocol
+    /// specification. Only answered by peers that speak the v2 protocol;
+    /// the destination computes the diff of its sync folder against the
+    /// submitted listing.
+    ///
+    /// # Returns
+    /// [SyncManifestResultV2::Diff] with the session and the files to upload
+    /// and delete, or [SyncManifestResultV2::Rejected] with a message when
+    /// the destination refuses the sync (no sync folder configured, HTTPS
+    /// required, or declined).
+    pub async fn sync_manifest(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+        folder_id: &str,
+        files: Vec<SyncFileInfoV2>,
+    ) -> Result<SyncManifestResultV2, ClientError> {
+        let url = TargetUrl {
+            version: ApiVersion::V2,
+            protocol: protocol.as_str(),
+            host: ip.to_string(),
+            port,
+            path: "/sync/manifest",
+            params: &[],
+        }
+        .to_string();
+
+        let body = SyncManifestRequestV2 {
+            folder_id: folder_id.to_string(),
+            files,
+        };
+
+        let res = self.client.post(&url).json(&body).send().await?;
+
+        match res.status() {
+            StatusCode::OK => {
+                let diff = res.json::<SyncDiffV2>().await?;
+                Ok(SyncManifestResultV2::Diff(diff))
+            }
+            StatusCode::FORBIDDEN | StatusCode::CONFLICT | StatusCode::BAD_REQUEST => {
+                let status = res.status().as_u16();
+                let body = res.text().await.unwrap_or_default();
+                let message = match serde_json::from_str::<crate::http::client::ErrorResponse>(&body)
+                {
+                    Ok(error) => error.message,
+                    Err(_) => body,
+                };
+                Ok(SyncManifestResultV2::Rejected { status, message })
+            }
+            _ => res.into_error().await,
+        }
+    }
+
+    /// Commits a sync session: asks the destination to delete the files
+    /// its diff authorized (a subset of `delete_remote`), which happens
+    /// after all uploads succeeded.
+    ///
+    /// POST /api/localsend/v2/sync/commit
+    ///
+    /// This is a LocalRsync extension, not part of the LocalSend protocol
+    /// specification.
+    pub async fn sync_commit(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+        session_id: &str,
+        delete_remote: Vec<String>,
+        delete_dirs: Vec<String>,
+    ) -> Result<(), ClientError> {
+        let url = TargetUrl {
+            version: ApiVersion::V2,
+            protocol: protocol.as_str(),
+            host: ip.to_string(),
+            port,
+            path: "/sync/commit",
+            params: &[],
+        }
+        .to_string();
+
+        let body = SyncCommitRequestV2 {
+            session_id: session_id.to_string(),
+            delete_remote,
+            delete_dirs,
+        };
+
+        let res = self.client.post(&url).json(&body).send().await?;
+
+        match res.status() {
+            StatusCode::OK | StatusCode::NO_CONTENT => Ok(()),
             _ => res.into_error().await,
         }
     }

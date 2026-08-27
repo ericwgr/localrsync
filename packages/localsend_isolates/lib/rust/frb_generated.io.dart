@@ -275,10 +275,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RsHttpClientError dco_decode_box_autoadd_rs_http_client_error(dynamic raw);
 
   @protected
+  RsSyncManifestDecision dco_decode_box_autoadd_rs_sync_manifest_decision(dynamic raw);
+
+  @protected
   RTCSendFileResponse dco_decode_box_autoadd_rtc_send_file_response(dynamic raw);
 
   @protected
+  SyncDiffV2 dco_decode_box_autoadd_sync_diff_v_2(dynamic raw);
+
+  @protected
   SyncFolderInfoDtoV2 dco_decode_box_autoadd_sync_folder_info_dto_v_2(dynamic raw);
+
+  @protected
+  SyncManifestRequestV2 dco_decode_box_autoadd_sync_manifest_request_v_2(dynamic raw);
 
   @protected
   TlsConfig dco_decode_box_autoadd_tls_config(dynamic raw);
@@ -354,6 +363,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<RsDeviceLog> dco_decode_list_rs_device_log(dynamic raw);
+
+  @protected
+  List<SyncFileInfoV2> dco_decode_list_sync_file_info_v_2(dynamic raw);
 
   @protected
   LsHttpClientVersion dco_decode_ls_http_client_version(dynamic raw);
@@ -465,6 +477,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RsStoredDevice dco_decode_rs_stored_device(dynamic raw);
 
   @protected
+  RsSyncManifestDecision dco_decode_rs_sync_manifest_decision(dynamic raw);
+
+  @protected
+  RsSyncManifestResult dco_decode_rs_sync_manifest_result(dynamic raw);
+
+  @protected
   RsUploadEvent dco_decode_rs_upload_event(dynamic raw);
 
   @protected
@@ -483,7 +501,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionEndReasonV2 dco_decode_session_end_reason_v_2(dynamic raw);
 
   @protected
+  SyncDiffV2 dco_decode_sync_diff_v_2(dynamic raw);
+
+  @protected
+  SyncFileInfoV2 dco_decode_sync_file_info_v_2(dynamic raw);
+
+  @protected
   SyncFolderInfoDtoV2 dco_decode_sync_folder_info_dto_v_2(dynamic raw);
+
+  @protected
+  SyncManifestRequestV2 dco_decode_sync_manifest_request_v_2(dynamic raw);
 
   @protected
   TlsConfig dco_decode_tls_config(dynamic raw);
@@ -754,10 +781,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RsHttpClientError sse_decode_box_autoadd_rs_http_client_error(SseDeserializer deserializer);
 
   @protected
+  RsSyncManifestDecision sse_decode_box_autoadd_rs_sync_manifest_decision(SseDeserializer deserializer);
+
+  @protected
   RTCSendFileResponse sse_decode_box_autoadd_rtc_send_file_response(SseDeserializer deserializer);
 
   @protected
+  SyncDiffV2 sse_decode_box_autoadd_sync_diff_v_2(SseDeserializer deserializer);
+
+  @protected
   SyncFolderInfoDtoV2 sse_decode_box_autoadd_sync_folder_info_dto_v_2(SseDeserializer deserializer);
+
+  @protected
+  SyncManifestRequestV2 sse_decode_box_autoadd_sync_manifest_request_v_2(SseDeserializer deserializer);
 
   @protected
   TlsConfig sse_decode_box_autoadd_tls_config(SseDeserializer deserializer);
@@ -833,6 +869,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<RsDeviceLog> sse_decode_list_rs_device_log(SseDeserializer deserializer);
+
+  @protected
+  List<SyncFileInfoV2> sse_decode_list_sync_file_info_v_2(SseDeserializer deserializer);
 
   @protected
   LsHttpClientVersion sse_decode_ls_http_client_version(SseDeserializer deserializer);
@@ -946,6 +985,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RsStoredDevice sse_decode_rs_stored_device(SseDeserializer deserializer);
 
   @protected
+  RsSyncManifestDecision sse_decode_rs_sync_manifest_decision(SseDeserializer deserializer);
+
+  @protected
+  RsSyncManifestResult sse_decode_rs_sync_manifest_result(SseDeserializer deserializer);
+
+  @protected
   RsUploadEvent sse_decode_rs_upload_event(SseDeserializer deserializer);
 
   @protected
@@ -964,7 +1009,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionEndReasonV2 sse_decode_session_end_reason_v_2(SseDeserializer deserializer);
 
   @protected
+  SyncDiffV2 sse_decode_sync_diff_v_2(SseDeserializer deserializer);
+
+  @protected
+  SyncFileInfoV2 sse_decode_sync_file_info_v_2(SseDeserializer deserializer);
+
+  @protected
   SyncFolderInfoDtoV2 sse_decode_sync_folder_info_dto_v_2(SseDeserializer deserializer);
+
+  @protected
+  SyncManifestRequestV2 sse_decode_sync_manifest_request_v_2(SseDeserializer deserializer);
 
   @protected
   TlsConfig sse_decode_tls_config(SseDeserializer deserializer);
@@ -1280,10 +1334,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_rs_http_client_error(RsHttpClientError self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_rs_sync_manifest_decision(RsSyncManifestDecision self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_rtc_send_file_response(RTCSendFileResponse self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_sync_diff_v_2(SyncDiffV2 self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_sync_folder_info_dto_v_2(SyncFolderInfoDtoV2 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_sync_manifest_request_v_2(SyncManifestRequestV2 self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_tls_config(TlsConfig self, SseSerializer serializer);
@@ -1359,6 +1422,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_rs_device_log(List<RsDeviceLog> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_sync_file_info_v_2(List<SyncFileInfoV2> self, SseSerializer serializer);
 
   @protected
   void sse_encode_ls_http_client_version(LsHttpClientVersion self, SseSerializer serializer);
@@ -1473,6 +1539,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_rs_stored_device(RsStoredDevice self, SseSerializer serializer);
 
   @protected
+  void sse_encode_rs_sync_manifest_decision(RsSyncManifestDecision self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rs_sync_manifest_result(RsSyncManifestResult self, SseSerializer serializer);
+
+  @protected
   void sse_encode_rs_upload_event(RsUploadEvent self, SseSerializer serializer);
 
   @protected
@@ -1491,7 +1563,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_session_end_reason_v_2(SessionEndReasonV2 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_sync_diff_v_2(SyncDiffV2 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_file_info_v_2(SyncFileInfoV2 self, SseSerializer serializer);
+
+  @protected
   void sse_encode_sync_folder_info_dto_v_2(SyncFolderInfoDtoV2 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_manifest_request_v_2(SyncManifestRequestV2 self, SseSerializer serializer);
 
   @protected
   void sse_encode_tls_config(TlsConfig self, SseSerializer serializer);

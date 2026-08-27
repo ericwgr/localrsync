@@ -10,6 +10,7 @@ import 'package:localsend_app/provider/network/server/controller/send_controller
 import 'package:localsend_app/provider/network/server/server_utils.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/provider/sync_folder_provider.dart';
+import 'package:localsend_app/provider/sync_receive_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/native/web_pages_loader.dart';
 import 'package:localsend_isolates/constants.dart';
@@ -372,6 +373,33 @@ class ServerService extends Notifier<ServerState?> {
         _restartAfterListenerFailure(event.error);
       case HttpServerSyncFolderInfoRequestedEvent():
         _onSyncFolderInfoRequested(event);
+      case HttpServerSyncScanStartedEvent():
+        ref.redux(syncReceiveProvider).dispatch(SyncReceiveScanStartedAction(folderPath: event.folderPath));
+      case HttpServerSyncScanProgressEvent():
+        ref.redux(syncReceiveProvider).dispatch(SyncReceiveScanProgressAction(processed: event.processed, total: event.total));
+      case HttpServerSyncManifestEvent():
+        ref
+            .redux(syncReceiveProvider)
+            .dispatch(
+              SyncReceiveManifestAction(
+                ip: event.ip,
+                folderPath: event.folderPath,
+                uploadCount: event.uploadCount,
+                deleteCount: event.deleteCount,
+              ),
+            );
+      case HttpServerSyncManifestRejectedEvent():
+        _logger.warning('Rejected sync manifest: [${event.status}] ${event.message}');
+      case HttpServerSyncCommitEvent():
+        ref
+            .redux(syncReceiveProvider)
+            .dispatch(
+              SyncReceiveCommitAction(
+                deletedCount: event.deletedCount,
+                success: event.success,
+                error: event.error,
+              ),
+            );
     }
   }
 

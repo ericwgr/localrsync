@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
 import 'package:localsend_app/provider/http_provider.dart';
 import 'package:localsend_app/provider/network/nearby_devices_provider.dart';
+import 'package:localsend_app/provider/persistence_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/sync_folder_provider.dart';
 import 'package:localsend_app/util/device_type_ext.dart';
 import 'package:localsend_app/widget/device_bage.dart';
+import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/device.dart';
 import 'package:localsend_isolates/rust/api/http.dart';
 import 'package:localsend_isolates/rust/api/model.dart';
@@ -19,6 +24,8 @@ import 'package:routerino/routerino.dart';
 /// Step 1: enter an IP address / http(s) URL or pick a nearby device.
 /// Step 2: shows the peer's configured sync folder path and size
 /// (fetched via `POST /api/localsend/v2/sync-folder-info`).
+/// Step 3: mirrors the local sync folder into the peer's sync folder
+/// (scan → manifest → parallel uploads → commit).
 class SyncDeviceDialog extends StatefulWidget {
   const SyncDeviceDialog();
 
@@ -30,6 +37,7 @@ class SyncDeviceDialog extends StatefulWidget {
 const _defaultPort = 53317;
 
 class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
+  final _inputController = TextEditingController();
   String _input = '';
 
   /// Currently registering the entered address.
@@ -47,6 +55,35 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
 
   /// The result of the sync folder query.
   _SyncFolderInfo? _query;
+
+  /// Whether the mirror sync (step 3) is running.
+  bool _syncing = false;
+
+  /// The id of the running push task, used to cancel it.
+  int? _taskId;
+
+  /// The stream of sync events of the running push.
+  StreamSubscription<HttpSyncEvent>? _syncSubscription;
+
+  /// The progress snapshot shown in step 3.
+  _SyncProgress? _progress;
+
+  /// Files of the diff that finished uploading / are uploading right now.
+  int _uploadDone = 0;
+  final Map<String, double> _inFlight = {};
+
+  /// Files deleted on the destination by the commit.
+  int _deleted = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    ensureRef((ref) {
+      final lastAddress = ref.read(persistenceProvider).getLastSyncAddress() ?? '';
+      _input = lastAddress;
+      _inputController.text = lastAddress;
+    });
+  }
 
   void _selectInputDevice() {
     setState(() {
@@ -95,6 +132,9 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
         return;
       }
       final device = response.body.toDevice(host, port, https);
+      // Persistence should not delay showing the successfully connected peer
+      // or turn a storage error into a connection error.
+      unawaited(ref.read(persistenceProvider).setLastSyncAddress(input));
       setState(() {
         _connecting = false;
         _inputDevice = device;
@@ -154,6 +194,134 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
     }
   }
 
+  /// Mirrors the local sync folder into the peer's sync folder by dispatching
+  /// a push task to the upload isolate and rendering its events as progress.
+  void _startSync() {
+    final device = _selected;
+    final query = _query;
+    final localPath = ref.read(syncFolderProvider).path;
+    if (device == null || device.ip == null || query is! _SyncFolderInfoData || localPath == null) {
+      return;
+    }
+
+    setState(() {
+      _syncing = true;
+      _progress = null;
+      _uploadDone = 0;
+      _inFlight.clear();
+      _deleted = 0;
+    });
+
+    final result = ref
+        .redux(parentIsolateProvider)
+        .dispatchTakeResult(
+          IsolateHttpSyncPushAction(
+            localPath: localPath,
+            device: device,
+          ),
+        );
+    _taskId = result.taskId;
+    _syncSubscription = result.events.listen(
+      _onSyncEvent,
+      onError: (Object error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _progress = _SyncProgressFailed(error.toString());
+        });
+      },
+      onDone: () {
+        if (!mounted || _taskId == null) {
+          // The dialog was closed or the push was canceled: nothing to do.
+          return;
+        }
+        setState(() {
+          _syncing = false;
+          _taskId = null;
+          // The stream ended without a terminal event: treat as canceled.
+          _progress ??= const _SyncProgressCanceled();
+        });
+      },
+    );
+  }
+
+  void _onSyncEvent(HttpSyncEvent event) {
+    setState(() {
+      switch (event) {
+        case HttpSyncScanStartedEvent(:final total):
+          _progress = _SyncProgressScanning(processed: 0, total: total);
+        case HttpSyncScanProgressEvent(:final processed, :final total):
+          _progress = _SyncProgressScanning(processed: processed, total: total);
+        case HttpSyncDiffEvent(:final needUpload, :final deleteRemote, :final deleteDirs):
+          _uploadDone = 0;
+          _inFlight.clear();
+          _progress = _SyncProgressDiff(
+            upload: needUpload.length,
+            delete: deleteRemote.length + deleteDirs.length,
+          );
+        case HttpSyncFileStartedEvent():
+          if (_progress case _SyncProgressDiff()) {
+            _progress = const _SyncProgressUploading();
+          }
+        case HttpSyncFileProgressEvent(:final path, :final progress):
+          _inFlight[path] = progress;
+        case HttpSyncFileFinishedEvent(:final path):
+          _inFlight.remove(path);
+          _uploadDone += 1;
+          _progress = const _SyncProgressUploading();
+        case HttpSyncCommittedEvent(:final deletedCount):
+          _deleted = deletedCount;
+          _progress = _SyncProgressCommitted(deletedCount);
+        case HttpSyncFailedEvent(:final error):
+          _progress = _SyncProgressFailed(error);
+        case HttpSyncFinishedEvent():
+          _progress = _SyncProgressDone(uploaded: _uploadDone, deleted: _deleted);
+      }
+    });
+  }
+
+  /// The number of files the manifest told us to upload: set by the diff
+  /// event, then unchanged. 0 until the diff arrives.
+  int get diffTotal => _progress is _SyncProgressDiff ? (_progress as _SyncProgressDiff).upload : _uploadDone;
+
+  /// The overall upload progress as a fraction of [diffTotal], counting
+  /// in-flight files by their own progress.
+  double get _uploadFraction {
+    final total = diffTotal;
+    if (total == 0) {
+      return 1;
+    }
+    final inFlight = _inFlight.values.fold<double>(0, (sum, p) => sum + p);
+    return ((_uploadDone + inFlight) / total).clamp(0.0, 1.0);
+  }
+
+  void _cancelSync() {
+    final taskId = _taskId;
+    if (taskId == null) {
+      return;
+    }
+    ref.redux(parentIsolateProvider).dispatch(IsolateHttpUploadCancelAction(taskId: taskId));
+    setState(() {
+      _progress = const _SyncProgressCanceled();
+      _syncing = false;
+      _taskId = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    // ignore: discarded_futures
+    _syncSubscription?.cancel();
+    if (_syncing && _taskId != null) {
+      // Closing the dialog mid-sync cancels the push instead of leaving an
+      // orphan task running in the upload isolate.
+      ref.redux(parentIsolateProvider).dispatch(IsolateHttpUploadCancelAction(taskId: _taskId!));
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = t.dialogs.syncDevice;
@@ -161,7 +329,7 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
       title: Text(strings.title),
       content: _showDetails ? _buildDetails(context) : _buildDeviceList(context),
       actions: [
-        if (_showDetails)
+        if (_showDetails && !_syncing)
           TextButton(
             onPressed: () {
               setState(() {
@@ -170,10 +338,21 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
             },
             child: Text(strings.back),
           ),
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(t.general.cancel),
-        ),
+        if (_syncing && _taskId != null)
+          TextButton(
+            onPressed: _cancelSync,
+            child: Text(strings.cancelSync),
+          )
+        else if (_progress case _SyncProgressDone() || _SyncProgressFailed() || _SyncProgressCanceled())
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(strings.close),
+          )
+        else
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(t.general.cancel),
+          ),
         if (!_showDetails)
           FilledButton(
             onPressed: _selected == null ? null : _showDetailsStep,
@@ -237,8 +416,118 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
             const SizedBox(height: 4),
             Text(info.sizeBytes!.toInt().asReadableFileSize, style: Theme.of(context).textTheme.bodyMedium),
           ],
+          if (query case _SyncFolderInfoData()) ...[
+            const SizedBox(height: 16),
+            _buildSyncSection(context),
+          ],
         ],
       ),
+    );
+  }
+
+  /// Step 3: the button that mirrors the local sync folder into the peer's
+  /// sync folder, plus the progress of the running mirror.
+  Widget _buildSyncSection(BuildContext context) {
+    final strings = t.dialogs.syncDevice;
+    final localPath = ref.read(syncFolderProvider).path;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (localPath == null)
+          Text(
+            strings.localSyncFolderNotSet,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
+          )
+        else
+          FilledButton.tonalIcon(
+            onPressed: _syncing ? null : _startSync,
+            icon: _syncing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.sync),
+            label: Text(
+              _syncing
+                  ? strings.syncing
+                  : _progress is _SyncProgressDone || _progress is _SyncProgressCommitted
+                  ? strings.syncAgain
+                  : strings.startSync,
+            ),
+          ),
+        if (_progress != null) ...[
+          const SizedBox(height: 12),
+          _buildProgress(context, _progress!),
+        ],
+      ],
+    );
+  }
+
+  /// The status line (and optional progress bar) of the running mirror.
+  Widget _buildProgress(BuildContext context, _SyncProgress progress) {
+    final strings = t.dialogs.syncDevice;
+    final (text, isError, value) = switch (progress) {
+      _SyncProgressScanning(:final processed, :final total) => (
+        strings.phaseScanning(processed: processed, total: total),
+        false,
+        total == 0 ? null : processed / total,
+      ),
+      _SyncProgressDiff(:final upload, :final delete) => (
+        strings.phaseDiff(upload: upload, delete: delete),
+        false,
+        null,
+      ),
+      _SyncProgressUploading() => (
+        strings.phaseUploading(done: _uploadDone, total: diffTotal),
+        false,
+        _uploadFraction,
+      ),
+      _SyncProgressCommitted(:final deleted) => (
+        strings.phaseCommitted(deleted: deleted),
+        false,
+        null,
+      ),
+      _SyncProgressDone(:final uploaded, :final deleted) => (
+        strings.phaseDone(uploaded: uploaded, deleted: deleted),
+        false,
+        null,
+      ),
+      _SyncProgressFailed(:final error) => (
+        strings.phaseFailed(error: error),
+        true,
+        null,
+      ),
+      _SyncProgressCanceled() => (strings.phaseCanceled, false, null),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.sync,
+              size: 16,
+              color: isError ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isError ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (value != null) ...[
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: value),
+        ],
+      ],
     );
   }
 
@@ -258,6 +547,7 @@ class _SyncDeviceDialogState extends State<SyncDeviceDialog> with Refena {
             children: [
               Expanded(
                 child: TextFormField(
+                  controller: _inputController,
                   enabled: !_connecting,
                   decoration: InputDecoration(
                     hintText: strings.inputHint,
@@ -422,4 +712,58 @@ class _SyncFolderInfoError extends _SyncFolderInfo {
   final String message;
 
   const _SyncFolderInfoError(this.message);
+}
+
+/// A snapshot of the running mirror sync (step 3), rendered in the dialog.
+sealed class _SyncProgress {
+  const _SyncProgress();
+}
+
+/// The sender's folder is being scanned and hashed.
+class _SyncProgressScanning extends _SyncProgress {
+  final int processed;
+  final int total;
+
+  const _SyncProgressScanning({required this.processed, required this.total});
+}
+
+/// The manifest was answered: the destination will receive these uploads and
+/// deletions to mirror the sender's folder.
+class _SyncProgressDiff extends _SyncProgress {
+  final int upload;
+  final int delete;
+
+  const _SyncProgressDiff({required this.upload, required this.delete});
+}
+
+/// The files of the diff are being uploaded.
+class _SyncProgressUploading extends _SyncProgress {
+  const _SyncProgressUploading();
+}
+
+/// The destination's commit deleted its extra files.
+class _SyncProgressCommitted extends _SyncProgress {
+  final int deleted;
+
+  const _SyncProgressCommitted(this.deleted);
+}
+
+/// The mirror finished successfully.
+class _SyncProgressDone extends _SyncProgress {
+  final int uploaded;
+  final int deleted;
+
+  const _SyncProgressDone({required this.uploaded, required this.deleted});
+}
+
+/// The mirror failed; no commit was applied for the failed phases.
+class _SyncProgressFailed extends _SyncProgress {
+  final String error;
+
+  const _SyncProgressFailed(this.error);
+}
+
+/// The mirror was canceled by the user.
+class _SyncProgressCanceled extends _SyncProgress {
+  const _SyncProgressCanceled();
 }
